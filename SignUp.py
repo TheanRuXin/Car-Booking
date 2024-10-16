@@ -6,7 +6,7 @@ import sqlite3
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,messagebox
 from pathlib import Path
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\build\assets\frame1")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\adminpage\assets\frame1")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -57,6 +57,9 @@ def SignUp_user(window):
     # Validate input
     if existing_user:
         messagebox.showerror("Error", "Email and Password are required!")
+        window.destroy()
+        from FristPage import show_first_page
+        show_first_page()
         conn.close()
         return
 
@@ -64,8 +67,8 @@ def SignUp_user(window):
     conn.commit()
     messagebox.showinfo("Success","Sign Up successful! Please Log in.")
     window.destroy()
-    from LogIn import show_LogIn_page
-    show_LogIn_page()
+    from LogIn import show_logIn_page
+    show_logIn_page()
 
     conn.close()
 
