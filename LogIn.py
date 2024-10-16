@@ -5,7 +5,7 @@
 
 from pathlib import Path
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\build\assets\frame2")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\adminpage\assets\frame2")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -14,9 +14,10 @@ def relative_to_assets(path: str) -> Path:
 # Explicit imports to satisfy Flake8
 import sqlite3
 from tkinter import Tk, Canvas, Entry,Text, Button, messagebox, PhotoImage
+import subprocess
 
 #Fuction to Log In a user
-def LogIn_user(window):
+def user_login(window):
     conn = sqlite3.connect('Users.db')
     c = conn.cursor()
 
@@ -35,41 +36,18 @@ def LogIn_user(window):
     if result:
         messagebox.showinfo("Success","LogIn successful!")
         window.destroy()
-        show_dashboard()
+        subprocess.Popen(["python",r'C:\Users\User\Documents\Ruxin file\build\profile\build\Profile.py'])
 
     else:
         messagebox.showerror("Error","Invalid email or password!")
         window.destroy()
-        from FristPage import show_FristPage_page
-        show_FristPage_page()
+        from FristPage import show_first_page
+        show_first_page()
     
     conn.close()
-# Function to show the dashboard
-def show_dashboard():
-    dashboard = Tk()
-    dashboard.geometry("800x500")
-    dashboard.configure(bg="#81BEEB")
-    dashboard.title("User Dashboard")
-
-    dashboard_label = Canvas(dashboard, bg="#81BEEB", height=300, width=400, bd=0, highlightthickness=0, relief="ridge")
-    dashboard_label.create_text(200, 100, text="Welcome to the Dashboard!", font=("Arial", 20), fill="#000000")
-    dashboard_label.pack()
-
-    # Logout button
-    logout_button = Button(dashboard, text="Logout", bg="#FF0000", fg="#FFFFFF", font=("Arial", 14),
-                           command=lambda: logout(dashboard))
-    logout_button.pack(pady=20)
-
-    dashboard.mainloop()
-
-# Function to logout
-def logout(dashboard):
-    dashboard.destroy()
-    show_login_page()
-
 
 #Login page
-def show_LogIn_page():
+def show_logIn_page():
     global entry_1,entry_2
     
     window = Tk()
@@ -96,7 +74,7 @@ def show_LogIn_page():
     canvas.create_text(365.0,77.0,anchor="nw",text="Log in",fill="#000000",font=("Inter Bold", 60 * -1))
     
     button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1, borderwidth=0,highlightthickness=0,command=lambda:LogIn_user(window),relief="flat")
+    button_1 = Button(image=button_image_1, borderwidth=0,highlightthickness=0,command=lambda:user_login(window),relief="flat")
     
     button_1.place(x=445.0,y=534.0,width=146.025390625,height=54.92308807373047)
     
@@ -104,4 +82,4 @@ def show_LogIn_page():
     window.mainloop()
 
 if __name__ == "__main__":
-    show_LogIn_page()
+    show_logIn_page()
