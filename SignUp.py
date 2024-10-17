@@ -22,7 +22,7 @@ c = conn.cursor()
 
 # Create a table for users
 c.execute('''CREATE TABLE IF NOT EXISTS Users
-            (username TEXT, phone_number TEXT, email TEXT, password TEXT)''')
+            (id PRIMARY KEY AUTOINCREMENT, username TEXT, phone_number TEXT, email TEXT, password TEXT)''')
 conn.commit()
 conn.close()
 
