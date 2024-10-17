@@ -11,378 +11,195 @@ from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,Frame
 from tkinter import Canvas, Scrollbar
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\jojol\Desktop\4006 cs\car rental booking system\build\assets\frame0")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build1\assets\frame0")
 
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
-window = Tk()
-
-window.geometry("1034x696")
-window.configure(bg = "#FFFFFF")
+def show_homepage2_page():
+    window = Tk()
+    window.geometry("1034x696")
+    window.configure(bg = "#FFFFFF")
 # Create a canvas and a scrollbar
-canvas = Canvas(window, bg="#f0f0f0")  # Use your desired background color here
-canvas.pack(side="left", fill="both", expand=True)
+    canvas = Canvas(window, bg="#f0f0f0")  # Use your desired background color here
+    canvas.pack(side="left", fill="both", expand=True)
 
-scrollbar = Scrollbar(window, command=canvas.yview)
-scrollbar.pack(side="right", fill="y")
+    scrollbar = Scrollbar(window, command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
 
 # Configure the canvas to respond to the scrollbar
-canvas.configure(yscrollcommand=scrollbar.set)
-canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-# Create a frame inside the canvas
-scrollable_frame = Frame(canvas, bg="#f0f0f0")  # Same background color as canvas
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    # Create a frame inside the canvas
+    scrollable_frame = Frame(canvas, bg="#f0f0f0")  # Same background color as canvas
 
 # Place the frame on the canvas
-canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-canvas.create_rectangle(
-    0.0,
-    1.0,
-    1034.0,
-    139.0,
-    fill="#DFDFDF",
-    outline="")
+    canvas.create_rectangle(0.0,1.0,1034.0,139.0,fill="#DFDFDF",outline="")
 
-image_image_1 = PhotoImage(
+    image_image_1 = PhotoImage(
     file=relative_to_assets("image_1.png"))
-image_1 = canvas.create_image(
+    image_1 = canvas.create_image(
     73.0,
     66.0,
     image=image_image_1
-)
+    )
 
-button_image_1 = PhotoImage(
+    button_image_1 = PhotoImage(
     file=relative_to_assets("button_1.png"))
-button_1 = Button(
+    button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=lambda: button_1(window),
     relief="flat"
-)
-button_1.place(
+    )
+    button_1.place(
     x=517.0,
     y=51.0,
     width=62.0,
     height=40.0
-)
+    )
 
-button_image_2 = PhotoImage(
+    button_image_2 = PhotoImage(
     file=relative_to_assets("button_2.png"))
-button_2 = Button(
+    button_2 = Button(
     image=button_image_2,
     borderwidth=0,
     highlightthickness=0,
     command=lambda: print("button_2 clicked"),
     relief="flat"
-)
-button_2.place(
+    )
+    button_2.place(
     x=579.0,
     y=51.0,
     width=74.0,
     height=40.0
-)
+    )
 
-button_image_3 = PhotoImage(
+    button_image_3 = PhotoImage(
     file=relative_to_assets("button_3.png"))
-button_3 = Button(
+    button_3 = Button(
     image=button_image_3,
     borderwidth=0,
     highlightthickness=0,
     command=lambda: print("button_3 clicked"),
     relief="flat"
-)
-button_3.place(
+    )
+    button_3.place(
     x=653.0,
     y=51.0,
     width=69.0,
     height=40.0
-)
+    )
 
-button_image_4 = PhotoImage(
+    button_image_4 = PhotoImage(
     file=relative_to_assets("button_4.png"))
-button_4 = Button(
+    button_4 = Button(
     image=button_image_4,
     borderwidth=0,
     highlightthickness=0,
     command=lambda: print("button_4 clicked"),
     relief="flat"
-)
-button_4.place(
+    )
+    button_4.place(
     x=722.0,
     y=51.0,
     width=74.0,
     height=40.0
-)
+    )
 
-canvas.create_text(
+    canvas.create_text(
     161.0,
     190.0,
     anchor="nw",
     text="Offers easy and fast rentals",
     fill="#000000",
     font=("Eras Bold ITC", 40 * -1, "italic")
-)
+    )
 
-button_image_5 = PhotoImage(
-    file=relative_to_assets("button_5.png"))
-button_5 = Button(
-    image=button_image_5,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_5 clicked"),
-    relief="flat"
-)
-button_5.place(
+    button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
+    button_5 = Button(image=button_image_5,borderwidth=0,highlightthickness=0,command=lambda: print("button_5 clicked"),relief="flat")
+    button_5.place(
     x=944.0,
     y=47.0,
     width=49.0,
-    height=49.0
-)
+    height=49.0)
 
-canvas.create_text(
-    56.0,
-    400.0,
-    anchor="nw",
-    text="Our Cars",
-    fill="#000000",
-    font=("Book Antiqua", 40 * -1,"bold")
-)
+    canvas.create_text(56.0,400.0,anchor="nw",text="Our Cars",fill="#000000",font=("Book Antiqua", 40 * -1,"bold"))
 
-canvas.create_text(
-    328.0,
-    936.0,
-    anchor="nw",
-    text="Contact Us",
-    fill="#000000",
-    font=("Book Antiqua", 30 * -1)
-)
+    canvas.create_text(328.0,936.0,anchor="nw",text="Contact Us",fill="#000000",font=("Book Antiqua", 30 * -1))
 
-canvas.create_text(
-    364.0,
-    990.0,
-    anchor="nw",
-    text="xxx-xxx-xxxx",
-    fill="#000000",
-    font=("Book Antiqua", 20 * -1)
-)
+    canvas.create_text(364.0,990.0,anchor="nw",text="xxx-xxx-xxxx",fill="#000000",font=("Book Antiqua", 20 * -1))
 
-canvas.create_rectangle(
-    88.0,
-    494.0,
-    423.0,
-    870.0,
-    fill="#D9D9D9",
-    outline="")
+    canvas.create_rectangle(88.0,494.0,423.0,870.0,fill="#D9D9D9",outline="")
 
-canvas.create_text(
-    121.0,
-    721.0,
-    anchor="nw",
-    text="Civic",
-    fill="#000000",
-    font=("Book Antiqua", 28 * -1)
-)
+    canvas.create_text(121.0,721.0,anchor="nw",text="Civic",fill="#000000",font=("Book Antiqua", 28 * -1))
 
-canvas.create_text(
-    281.0,
-    747.0,
-    anchor="nw",
-    text="RM 200",
-    fill="#000000",
-    font=("Book Antiqua", 28 * -1)
-)
+    canvas.create_text(281.0,747.0,anchor="nw",text="RM 200",fill="#000000",font=("Book Antiqua", 28 * -1))
 
-canvas.create_text(
-    157.0,
-    767.0,
-    anchor="nw",
-    text="5",
-    fill="#000000",
-    font=("Book Antiqua", 20 * -1)
-)
+    canvas.create_text(157.0,767.0,anchor="nw",text="5",fill="#000000",font=("Book Antiqua", 20 * -1))
 
-image_image_2 = PhotoImage(
-    file=relative_to_assets("image_2.png"))
-image_2 = canvas.create_image(
-    255.0,
-    617.0,
-    image=image_image_2
-)
+    image_image_2 = PhotoImage(file=relative_to_assets("image_2.png"))
+    image_2 = canvas.create_image(255.0,617.0,image=image_image_2)
 
-button_image_6 = PhotoImage(
-    file=relative_to_assets("button_6.png"))
-button_6 = Button(
-    image=button_image_6,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_6 clicked"),
-    relief="flat"
-)
-button_6.place(
-    x=800.0,
-    y=51.0,
-    width=122.0,
-    height=40.0
-)
+    button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
+    button_6 = Button(image=button_image_6,borderwidth=0,highlightthickness=0,command=lambda: print("button_6 clicked"),relief="flat")
+    button_6.place(x=800.0,y=51.0,width=122.0,height=40.0)
 
-button_image_7 = PhotoImage(
-    file=relative_to_assets("button_7.png"))
-button_7 = Button(
-    image=button_image_7,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_7 clicked"),
-    relief="flat"
-)
-button_7.place(
-    x=193.0,
-    y=796.0,
-    width=125.0,
-    height=49.0
-)
+    button_image_7 = PhotoImage(file=relative_to_assets("button_7.png"))
+    button_7 = Button(image=button_image_7,borderwidth=0,highlightthickness=0,command=lambda: print("button_7 clicked"),relief="flat")
+    button_7.place(x=193.0,y=796.0,width=125.0,height=49.0)
 
-image_image_3 = PhotoImage(
-    file=relative_to_assets("image_3.png"))
-image_3 = canvas.create_image(
-    142.0,
-    777.0,
-    image=image_image_3
-)
+    image_image_3 = PhotoImage(file=relative_to_assets("image_3.png"))
+    image_3 = canvas.create_image(142.0,777.0,image=image_image_3)
 
-canvas.create_rectangle(
-    615.0,
-    494.0,
-    950.0,
-    870.0,
-    fill="#D9D9D9",
-    outline="")
+    canvas.create_rectangle(615.0,494.0,950.0,870.0,fill="#D9D9D9",outline="")
 
-canvas.create_text(
-    648.0,
-    721.0,
-    anchor="nw",
-    text="Camry",
-    fill="#000000",
-    font=("Book Antiqua", 28 * -1)
-)
+    canvas.create_text(648.0,721.0,anchor="nw",text="Camry",fill="#000000",font=("Book Antiqua", 28 * -1))
 
-canvas.create_text(
-    808.0,
-    747.0,
-    anchor="nw",
-    text="RM 250",
-    fill="#000000",
-    font=("Book Antiqua", 28 * -1)
-)
+    canvas.create_text(808.0,747.0,anchor="nw",text="RM 250",fill="#000000",font=("Book Antiqua", 28 * -1))
 
-canvas.create_text(
-    684.0,
-    767.0,
-    anchor="nw",
-    text="5",
-    fill="#000000",
-    font=("Book Antiqua", 20 * -1)
-)
+    canvas.create_text(684.0,767.0,anchor="nw",text="5",fill="#000000",font=("Book Antiqua", 20 * -1))
 
-button_image_8 = PhotoImage(
-    file=relative_to_assets("button_8.png"))
-button_8 = Button(
-    image=button_image_8,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_8 clicked"),
-    relief="flat"
-)
-button_8.place(
-    x=720.0,
-    y=796.0,
-    width=125.0,
-    height=49.0
-)
+    button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
+    button_8 = Button(image=button_image_8,borderwidth=0,highlightthickness=0,command=lambda: print("button_8 clicked"),relief="flat")
+    button_8.place(x=720.0,y=796.0,width=125.0,height=49.0)
 
-image_image_4 = PhotoImage(
-    file=relative_to_assets("image_4.png"))
-image_4 = canvas.create_image(
-    669.0,
-    777.0,
-    image=image_image_4
-)
+    image_image_4 = PhotoImage(file=relative_to_assets("image_4.png"))
+    image_4 = canvas.create_image(669.0,777.0,image=image_image_4)
 
-image_image_5 = PhotoImage(
-    file=relative_to_assets("image_5.png"))
-image_5 = canvas.create_image(
-    782.0,
-    617.0,
-    image=image_image_5
-)
+    image_image_5 = PhotoImage(file=relative_to_assets("image_5.png"))
+    image_5 = canvas.create_image(782.0,617.0,image=image_image_5)
 
-canvas.create_rectangle(
-    -1.0,
-    921.9999997601703,
-    1034.0,
-    923.0,
-    fill="#DFDFDF",
-    outline="")
+    canvas.create_rectangle(-1.0,921.9999997601703,1034.0,923.0,fill="#DFDFDF",outline="")
 
-image_image_6 = PhotoImage(
-    file=relative_to_assets("image_6.png"))
-image_6 = canvas.create_image(
-    88.0,
-    984.0,
-    image=image_image_6
-)
+    image_image_6 = PhotoImage(file=relative_to_assets("image_6.png"))
+    image_6 = canvas.create_image(88.0,984.0,image=image_image_6)
 
-image_image_7 = PhotoImage(
-    file=relative_to_assets("image_7.png"))
-image_7 = canvas.create_image(
-    344.0,
-    1014.0,
-    image=image_image_7
-)
+    image_image_7 = PhotoImage(file=relative_to_assets("image_7.png"))
+    image_7 = canvas.create_image(344.0,1014.0,image=image_image_7)
 
-entry_image_1 = PhotoImage(
-    file=relative_to_assets("entry_1.png"))
-entry_bg_1 = canvas.create_image(
-    516.5,
-    312.5,
-    image=entry_image_1
-)
-entry_1 = Entry(
-    bd=0,
-    bg="#D9D9D9",
-    fg="#000716",
-    highlightthickness=0,
-    font=("Arial", 14)
-)
-entry_1.place(
-    x=180.0,
-    y=279.0,
-    width=673.0,
-    height=65.0
-)
+    entry_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
+    entry_bg_1 = canvas.create_image(516.5,312.5,image=entry_image_1)
+    entry_1 = Entry(bd=0,bg="#D9D9D9",fg="#000716",highlightthickness=0,font=("Arial", 14))
+    entry_1.place(x=180.0,y=279.0,width=673.0,height=65.0)
 
-button_image_9 = PhotoImage(
-    file=relative_to_assets("button_9.png"))
-button_9 = Button(
-    image=button_image_9,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_9 clicked"),
-    relief="flat"
-)
-button_9.place(
-    x=814.0,
-    y=293.0,
-    width=46.0,
-    height=37.0
-)
-scrollable_frame.update_idletasks()  # Update frame dimensions
+    button_image_9 = PhotoImage(file=relative_to_assets("button_9.png"))
+    button_9 = Button(image=button_image_9,borderwidth=0,highlightthickness=0,command=lambda: print("button_9 clicked"),relief="flat")
+    button_9.place(x=814.0,y=293.0,width=46.0,height=37.0)
+
+    def button_1(window):
+        window.destroy()
+        from homepage2 import show_homepage2_page
+        show_homepage2_page()
+
+    scrollable_frame.update_idletasks()  # Update frame dimensions
 # Set the canvas scroll region (important to handle scrolling)
-canvas.config(scrollregion=canvas.bbox("all"))
+    canvas.config(scrollregion=canvas.bbox("all"))
+    window.mainloop()
 
-window.mainloop()
+if __name__ == "__main__":
+    show_homepage2_page()
