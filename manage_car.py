@@ -88,7 +88,7 @@ def browse_image():
 # Function to upload and display the image
 def upload_image():
     img = Image.open(image_path)
-    img = img.resize((150, 150), Image.LANCZOS)  # Resize the image to 150x150
+    img = img.resize((300, 300), Image.LANCZOS)  # Resize the image to 150x150
     img = ImageTk.PhotoImage(img)
     image_display.config(image=img)
     image_display.image = img
@@ -205,66 +205,66 @@ image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
 image_1 = canvas.create_image(610.0,386.0,image=image_image_1)
 
 # Title
-canvas.create_text(600, 28, anchor="center", text="MANAGE CAR DETAILS", fill="#000000",font=("Times New Roman ExtraBold", 18))
+canvas.create_text(600, 40, anchor="center", text="MANAGE CAR DETAILS", fill="#000000",font=("Times New Roman ExtraBold", 18))
 
 # Input fields
-canvas.create_text(150.0, 98.0, anchor="nw", text="Registration Number:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(50.0, 410.0, anchor="nw", text="Registration Number:", fill="#000000", font=("Inter Bold", 14 * -1))
 entry_registration = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
-entry_registration.place(x=300.0, y=96.0, width=180.0, height=22.0)
+entry_registration.place(x=200.0, y=410.0, width=180.0, height=22.0)
 
-canvas.create_text(150.0, 138.0, anchor="nw", text="Make & Model:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(50.0, 466.0, anchor="nw", text="Make & Model:", fill="#000000", font=("Inter Bold", 14 * -1))
 make_and_model_var = StringVar(window)
 make_and_model_var.set("Select")  # Default value
 make_and_model_options = ["Toyota Camry", "Honda Civic", "BMW 3 Series", "Ford Focus", "Audi A4"]
 make_and_model_dropdown = OptionMenu(window, make_and_model_var, *make_and_model_options)
-make_and_model_dropdown.place(x=300.0, y=136.0, width=180.0)
+make_and_model_dropdown.place(x=200.0, y=466.0, width=180.0)
 
-canvas.create_text(150.0, 178.0, anchor="nw", text="Seating Capacity:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(50.0, 522.0, anchor="nw", text="Seating Capacity:", fill="#000000", font=("Inter Bold", 14 * -1))
 seating_var = StringVar(window)
 seating_var.set("Select")  # Default value
 seating_options = ["2", "4", "5", "7", "8"]
 seating_dropdown = OptionMenu(window, seating_var, *seating_options)
-seating_dropdown.place(x=300.0, y=176.0, width=180.0)
+seating_dropdown.place(x=200.0, y=522.0, width=180.0)
 
-canvas.create_text(150.0, 218.0, anchor="nw", text="Daily Rate (RM):", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(50.0, 578.0, anchor="nw", text="Daily Rate (RM):", fill="#000000", font=("Inter Bold", 14 * -1))
 entry_rate = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
-entry_rate.place(x=300.0, y=216.0, width=180.0, height=22.0)
+entry_rate.place(x=200.0, y=578.0, width=180.0, height=22.0)
 
-canvas.create_text(150.0, 258.0, anchor="nw", text="Fuel Type:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(50.0, 643.0, anchor="nw", text="Fuel Type:", fill="#000000", font=("Inter Bold", 14 * -1))
 fuel_type_var = StringVar(window)
 fuel_type_var.set("Select")  # Default value
 fuel_type_options = ["Petrol", "Diesel", "Electric", "Hybrid"]
 fuel_type_dropdown = OptionMenu(window, fuel_type_var, *fuel_type_options)
-fuel_type_dropdown.place(x=300.0, y=256.0, width=180.0)
+fuel_type_dropdown.place(x=200.0, y=634.0, width=180.0)
 
-canvas.create_text(150.0, 298.0, anchor="nw", text="Manufacturer Year:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(410.0, 410.0, anchor="nw", text="Manufacturer Year:", fill="#000000", font=("Inter Bold", 14 * -1))
 entry_year = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
-entry_year.place(x=300.0, y=296.0, width=180.0, height=22.0)
+entry_year.place(x=550.0, y=410.0, width=180.0, height=22.0)
 
-canvas.create_text(150.0, 338.0, anchor="nw", text="Transmission Type:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(410.0, 466.0, anchor="nw", text="Transmission Type:", fill="#000000", font=("Inter Bold", 14 * -1))
 transmission_var = StringVar(window)
 transmission_var.set("Select")  # Default value
 transmission_options = ["Manual","Automatic"]
 transmission_dropdown = OptionMenu(window, transmission_var, *transmission_options)
-transmission_dropdown.place(x=300.0, y=336.0, width=180.0)
+transmission_dropdown.place(x=550.0, y=466.0, width=180.0)
 
-canvas.create_text(150.0, 378.0, anchor="nw", text="Car Type:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(410.0, 522.0, anchor="nw", text="Car Type:", fill="#000000", font=("Inter Bold", 14 * -1))
 car_type_var = StringVar(window)
 car_type_var.set("Select")  # Default value
 car_type_options = ["SUV","Hatchback","Crossover","Convertible","Sedan","Sparts car","Coupe","Minivan","Station Wagon","Pickup Truck"]
 car_type_dropdown = OptionMenu(window, car_type_var, *car_type_options)
-car_type_dropdown.place(x=300.0, y=376.0, width=180.0)
+car_type_dropdown.place(x=550.0, y=522.0, width=180.0)
 
-canvas.create_text(150.0, 418.0, anchor="nw", text="Mileage:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(410.0, 578.0, anchor="nw", text="Mileage:", fill="#000000", font=("Inter Bold", 14 * -1))
 entry_mileage = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
-entry_mileage.place(x=300.0, y=416.0, width=180.0, height=22.0)
+entry_mileage.place(x=550.0, y=578.0, width=180.0, height=22.0)
 
-canvas.create_text(150.0, 458.0, anchor="nw", text="Color:", fill="#000000", font=("Inter Bold", 14 * -1))
+canvas.create_text(410.0, 634.0, anchor="nw", text="Color:", fill="#000000", font=("Inter Bold", 14 * -1))
 color_var = StringVar(window)
 color_var.set("Select")  # Default value
 color_options = ["White","Black","Grey","Silver"]
 color_dropdown = OptionMenu(window, color_var, *color_options)
-color_dropdown.place(x=300.0, y=456.0, width=180.0)
+color_dropdown.place(x=550.0, y=634.0, width=180.0)
 
 
 # Browse image button
@@ -274,11 +274,11 @@ button_browse = Button(
     bg="#64C4ED",  # Light blue background
     fg="black"
 )
-button_browse.place(x=300.0, y=496.0, width=100.0, height=30.0)
+button_browse.place(x=790.0, y=610.0, width=100.0, height=30.0)
 
 # Image display area
 image_display = Label(window)
-image_display.place(x=600, y=130, width=300, height=300)
+image_display.place(x=900, y=400, width=300, height=300)
 
 treeview = ttk.Treeview(window, columns=("ID", "Registration Number", "Make & Model", "Seating Capacity", "Daily Rate", "Fuel Type","Manufacturer Year","Transmission Type","Car Type","Mileage","Color"), show="headings")
 
@@ -306,7 +306,7 @@ treeview.column("Car Type", width=150, anchor="center")
 treeview.column("Mileage", width=100, anchor="center")
 treeview.column("Color", width=100, anchor="center")
 
-treeview.place(x=50, y=600, width=1121, height=200)
+treeview.place(x=25, y=70, width=1175, height=300)
 treeview.bind("<<TreeviewSelect>>", select_item)
 
 # Buttons for saving, updating, deleting, and clearing (below the image)
@@ -316,7 +316,7 @@ button_save = Button(
     bg="green",  # Light blue background
     fg="#FFFFFF"
 )
-button_save.place(x=580, y=456, width=80, height=30)
+button_save.place(x=810, y=410, width=80, height=30)
 
 button_update = Button(
     text="Update",
@@ -324,7 +324,7 @@ button_update = Button(
     bg="#FFA500",  # Orange background for update
     fg="#FFFFFF"
 )
-button_update.place(x=670, y=456, width=80, height=30)
+button_update.place(x=810, y=460, width=80, height=30)
 
 button_delete = Button(
     text="Delete",
@@ -332,7 +332,7 @@ button_delete = Button(
     bg="#D9534F",  # Red background for delete
     fg="#FFFFFF"
 )
-button_delete.place(x=760, y=456, width=80, height=30)
+button_delete.place(x=810, y=510, width=80, height=30)
 
 button_clear = Button(
     text="Clear",
@@ -340,7 +340,7 @@ button_clear = Button(
     bg="#DCDCDC",  # Light gray background for clear
     fg="#000000"
 )
-button_clear.place(x=850, y=456, width=80, height=30)
+button_clear.place(x=810, y=560, width=80, height=30)
 
 refresh_treeview()
 window.mainloop()
