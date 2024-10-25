@@ -38,7 +38,7 @@ def agency_login(window):
     if result:
         messagebox.showinfo("Success", "LogIn successful!")
         window.destroy()
-        subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\agency\build\manage_car.py"])
+        subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\agency\agency_panel\build\agency_panel.py"])
 
     else:
         messagebox.showerror("Error", "Invalid ID or password!")
