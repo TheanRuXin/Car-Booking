@@ -9,7 +9,7 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Button, StringVar, filedialog, OptionMenu, Label, ttk, messagebox,PhotoImage
 from PIL import Image, ImageTk
 import sqlite3
-
+import subprocess
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
 
@@ -193,6 +193,10 @@ def clear_selection():
     color_var.set("Select")
     image_display.config(image="")  # Clear image
 
+def back_to_panel(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\agency\agency_panel\build\agency_panel.py"])
+
 window = Tk()
 
 window.geometry("1221x773")
@@ -342,6 +346,13 @@ button_clear = Button(
 )
 button_clear.place(x=810, y=560, width=80, height=30)
 
+button_back = Button(
+    text="Back to Panel",
+    command=lambda:back_to_panel(window),
+    bg="#F6139F",
+    fg="#000000"
+)
+button_back.place(x=790, y=660, width=100, height=30)
 refresh_treeview()
 window.mainloop()
 
