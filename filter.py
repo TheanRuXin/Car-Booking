@@ -19,6 +19,18 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def home_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
+
+def promo_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+
+def profile_button(window):
+    window.destroy()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+
 def connect_db():
     conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     return conn
@@ -145,7 +157,7 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=lambda: profile_button(window),
     relief="flat"
 )
 button_1.place(
@@ -177,7 +189,7 @@ button_3 = Button(
     image=button_image_3,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_3 clicked"),
+    command=lambda: home_button(window),
     relief="flat"
 )
 button_3.place(
@@ -193,7 +205,7 @@ button_4 = Button(
     image=button_image_4,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_4 clicked"),
+    command=lambda: promo_button(window),
     relief="flat"
 )
 button_4.place(
