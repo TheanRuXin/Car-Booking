@@ -126,22 +126,6 @@ button_2.place(
     height=40.0
 )
 
-button_image_3 = PhotoImage(
-    file=relative_to_assets("button_3.png"))
-button_3 = Button(
-    image=button_image_3,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_3 clicked"),
-    relief="flat"
-)
-button_3.place(
-    x=700.0,
-    y=30.0,
-    width=84.0,
-    height=52.0
-)
-
 button_image_4 = PhotoImage(
     file=relative_to_assets("button_4.png"))
 button_4 = Button(
