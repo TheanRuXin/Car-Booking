@@ -9,16 +9,18 @@ from pathlib import Path
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 import sqlite3
+from PIL import Image, ImageTk
+import subprocess
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build\assets\frame1")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame1")
 
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def connect_db():
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     return conn
 
 # Modified search_cars to display directly on canvas
@@ -26,7 +28,7 @@ def search_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = "SELECT car_model, price, seats, doors, transmission, image_path FROM cars WHERE 1=1"
+    query = "SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1"
     parameters = []
 
     car_model = car_model_entry.get().lower()
@@ -35,16 +37,16 @@ def search_cars():
     seats = seats_entry.get()
 
     if car_model:
-        query += " AND LOWER(car_model) LIKE ?"
+        query += " AND LOWER(make_and_model) LIKE ?"
         parameters.append(f"%{car_model}%")
     if min_price:
-        query += " AND price >= ?"
+        query += " AND daily_rate >= ?"
         parameters.append(int(min_price))
     if max_price:
-        query += " AND price <= ?"
+        query += " AND daily_rate <= ?"
         parameters.append(int(max_price))
     if seats:
-        query += " AND seats = ?"
+        query += " AND seating_capacity = ?"
         parameters.append(int(seats))
 
 
@@ -52,11 +54,12 @@ def search_cars():
     filtered_cars = cursor.fetchall()
     conn.close()
 
-    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'doors': car[3], 'transmission': car[4], 'image': car[5]} for car in filtered_cars]
+    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]} for car in filtered_cars]
     display_car_details(car_details)
 
 def display_car_details(car_data):
     canvas.delete("car_detail")  # Clear previous details
+    canvas.image_references = [] # Create a list to hold image references
 
     coords = [
         (316.0, 140.0, 578.0, 309.0),
@@ -79,27 +82,30 @@ def display_car_details(car_data):
         # Load the image
         if car['image']:
             try:
-                car_image = PhotoImage(file=car['image'])
-                canvas.create_image(x1 + 20, y1 + 10, anchor="nw", image=car_image, tags="car_detail")
-                canvas.image = car_image  # Keep a reference to avoid garbage collection
+                car_image = Image.open(car['image'])
+                car_image = car_image.resize((150, 110), Image.LANCZOS)
+                car_image = ImageTk.PhotoImage(car_image)
+                canvas.image_references.append(car_image)
+                canvas.create_image(x1 + 110, y1 + 2, anchor="nw", image=car_image, tags="car_detail")
+
             except Exception as e:
                 print(f"Error loading image for {car['brand']}: {e}")
 
         # Display car details
         canvas.create_text((x1 + 20, y1 + 80), text=f"{car['brand']}", font=("Helvetica", 13, "bold"), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
-        canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Doors: {car['doors']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+        canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Car Type: {car['car_type']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 140), text=f"Transmission: {car['transmission']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
 
 def load_all_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT car_model, price, seats, doors, transmission,image_path FROM cars")
+    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars_details")
     car_data = cursor.fetchall()
     conn.close()
 
-    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'doors': car[3], 'transmission': car[4], 'image': car[5]}for car in car_data]
+    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]}for car in car_data]
     display_car_details(car_details)
 
 
@@ -298,13 +304,7 @@ canvas.create_text(
     font=("KaiseiDecol Medium", 16 * -1)
 )
 
-entry_image_3 = PhotoImage(
-    file=relative_to_assets("entry_3.png"))
-entry_bg_3 = canvas.create_image(
-    140.5,
-    605.0,
-    image=entry_image_3
-)
+
 seats_entry = Entry(
     bd=1,
     bg="#FFFFFF",
@@ -327,13 +327,6 @@ canvas.create_text(
     font=("KaiseiDecol Medium", 16 * -1)
 )
 
-entry_image_4 = PhotoImage(
-    file=relative_to_assets("entry_4.png"))
-entry_bg_4 = canvas.create_image(
-    140.5,
-    522.0,
-    image=entry_image_4
-)
 max_price_entry = Entry(
     bd=1,
     bg="#FFFFFF",
@@ -389,32 +382,6 @@ canvas.create_rectangle(913.0, 353.0, 1175.0, 522.0, fill="#FFFDFD", outline="gr
 canvas.create_rectangle(316.0, 566.0, 578.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
 canvas.create_rectangle(614.0, 566.0, 877.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
 canvas.create_rectangle(913.0, 566.0, 1175.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
-
-
-
-image_image_5 = PhotoImage(
-    file=relative_to_assets("image_5.png"))
-image_5 = canvas.create_image(
-    1043.0,
-    410.0,
-    image=image_image_5
-)
-
-image_image_6 = PhotoImage(
-    file=relative_to_assets("image_6.png"))
-image_6 = canvas.create_image(
-    746.0,
-    410.0,
-    image=image_image_6
-)
-
-image_image_7 = PhotoImage(
-    file=relative_to_assets("image_7.png"))
-image_7 = canvas.create_image(
-    447.0,
-    410.0,
-    image=image_image_7
-)
 
 
 window.resizable(False, False)
