@@ -8,7 +8,8 @@ from pathlib import Path
 # from tkinter import *
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-
+import subprocess
+import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame5")
@@ -17,7 +18,11 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def connect_db():
+    conn = sqlite3.connect('Car_Rental.db')
+    return conn
 
+# connect with database, reference(4006 view booking details)
 window = Tk()
 
 window.geometry("1221x773")
@@ -83,21 +88,6 @@ button_2.place(
     height=40.0
 )
 
-button_image_3 = PhotoImage(
-    file=relative_to_assets("button_3.png"))
-button_3 = Button(
-    image=button_image_3,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_3 clicked"),
-    relief="flat"
-)
-button_3.place(
-    x=700.0,
-    y=24.0,
-    width=84.0,
-    height=52.0
-)
 
 button_image_4 = PhotoImage(
     file=relative_to_assets("button_4.png"))
