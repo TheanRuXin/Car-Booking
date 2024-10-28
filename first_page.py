@@ -18,13 +18,6 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def promo_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
-
-def cars_button(window):
-    window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
 
 def sign_up_button(window):
     window.destroy()
@@ -61,19 +54,6 @@ def show_first_page():
                        font=("Average Regular", 30 * -1))
 
     canvas.create_text(67.0, 426.0, anchor="nw", text="you need to go.", fill="#FFFFFF",font=("Average Regular", 30 * -1))
-
-
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0,command=lambda: print("button_1 clicked"), relief="flat")
-    button_1.place(x=643.0, y=38.0, width=84.0, height=52.0)
-
-    button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
-    button_2 = Button(image=button_image_2, borderwidth=0, highlightthickness=0,command=lambda:promo_button(window), relief="flat")
-    button_2.place(x=797.0, y=38.0, width=90.0, height=52.0)
-
-    button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
-    button_3 = Button(image=button_image_3, borderwidth=0, highlightthickness=0,command=lambda:cars_button(window), relief="flat")
-    button_3.place(x=727.0, y=38.0, width=70.0, height=52.0)
 
     button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
     button_4 = Button(image=button_image_4, borderwidth=0, highlightthickness=0,command=lambda: sign_up_button(window), relief="flat")
