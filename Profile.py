@@ -7,123 +7,211 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,filedialog,Label,messagebox
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 import subprocess
-from PIL import Image, ImageTk
+
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r'C:\Users\User\Documents\Ruxin file\build\profile\build\assets\frame0')
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame8")
+
+
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-current_image = None
-image_path = None
-image_display = None
-button_7 = None
-
-def upload_image():
-    global button_image_7,current_image,image_dispaly,image_path,button_7
-    img = Image.open(image_path)
-    img = img.resize((127, 128), Image.LANCZOS)  # Resize the image to 230x237
-    img = ImageTk.PhotoImage(img)
-
-    if image_display is not None:
-        image_display.config(image=img)
-        image_display.image = img # Keep a reference to avoid garbage collection
-
-    # Update button_7 image
-    if button_7 is not None:
-        button_image_7 = img  # Store new image in variable
-        button_7.config(image=button_image_7)  # Update button image
-        button_7.image = button_image_7  # Keep a reference for garbage collection
-
-    # Store the current image for saving
-    current_image = img
-
-    # Show message box indicating successful upload
-    messagebox.showinfo("Success", "Image uploaded successfully!")
-
-def browse_image():
-    global image_path
-    image_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg;*.jpeg;*.png;*.bmp")])
-    if image_path:
-        upload_image()
-
-def edit_file(window):
+def book_now_button(window):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile\build\Edit_File.py"])
 
-def log_out(window):
+def view_booking_button(window):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\adminpage\build\FristPage.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\view_booking.py"])
 
-def show_profile_page():
-    global button_7,image_display
-    window = Tk()
-    window.geometry("1029x679")
-    window.configure(bg = "#FFFFFF")
+def notifications_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\notification.py"])
 
-    canvas = Canvas(window,bg = "#FFFFFF",height = 679,width = 1029,bd = 0,highlightthickness = 0,relief = "ridge")
-    canvas.place(x = 0, y = 0)
-    canvas.create_rectangle(0.0,1.0,1029.0,139.0,fill="#DFDFDF",outline="")
-    canvas.create_rectangle(0.0,1.0,1029.0,139.0,fill="#DFDFDF",outline="")
+def history_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\history.py"])
 
-    image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
-    image_1 = canvas.create_image(73.0,66.0,image=image_image_1)
+def log_out_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
 
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1,borderwidth=0,highlightthickness=0,command=lambda: print("button_1 clicked"),relief="flat")
-    button_1.place(x=517.0,y=51.0,width=62.0,height=40.0)
+def promo_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
 
-    button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
-    button_2 = Button(image=button_image_2,borderwidth=0,highlightthickness=0,command=lambda: print("button_2 clicked"),relief="flat")
-    button_2.place(x=579.0,y=51.0,width=74.0,height=40.0)
+def cars_button(window):
+    window.destroy()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
 
-    button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
-    button_3 = Button(image=button_image_3,borderwidth=0,highlightthickness=0,command=lambda: print("button_3 clicked"),relief="flat")
-    button_3.place(x=653.0,y=51.0,width=69.0,height=40.0)
+window = Tk()
 
-    button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
-    button_4 = Button(image=button_image_4,borderwidth=0,highlightthickness=0,command=lambda: print("button_4 clicked"),relief="flat")
-    button_4.place(x=722.0,y=51.0,width=74.0,height=40.0)
+window.geometry("1221x773")
+window.configure(bg = "#FFFFFF")
 
-    button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
-    button_5 = Button(image=button_image_5,borderwidth=0,highlightthickness=0,command=lambda: print("button_5 clicked"),relief="flat")
-    button_5.place(x=944.0,y=47.0,width=49.0,height=49.0)
 
-    button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
-    button_6 = Button(image=button_image_6,borderwidth=0,highlightthickness=0,command=lambda: print("button_6 clicked"),relief="flat")
-    button_6.place(x=800.0,y=51.0,width=122.0,height=40.0)
+canvas = Canvas(
+    window,
+    bg = "#FFFFFF",
+    height = 773,
+    width = 1221,
+    bd = 0,
+    highlightthickness = 0,
+    relief = "ridge"
+)
 
-    image_display = Label(canvas, bg="#FFFFFF")
-    image_display.place(x=167.0, y=173.0, width=127.0, height=128.0)
+canvas.place(x = 0, y = 0)
+canvas.create_rectangle(
+    0.0,
+    1.0,
+    1220.0,
+    166.0,
+    fill="#DFDFDF",
+    outline="")
 
-    button_image_7 = PhotoImage(file=relative_to_assets("button_7.png"))
-    button_7 = Button(image=button_image_7,borderwidth=0,highlightthickness=0,command=lambda:browse_image(),relief="flat")
-    button_7.place(x=167.0,y=173.0,width=127.0,height=128.0)
+canvas.create_rectangle(
+    0.0,
+    1.0,
+    1220.0,
+    166.0,
+    fill="#DFDFDF",
+    outline="")
 
-    canvas.create_text(356.0,202.0,anchor="nw",text="username",fill="#000000",font=("RobotoRoman Regular", 24 * -1))
-    canvas.create_text(356.0,258.0,anchor="nw",text="email",fill="#919191",font=("RobotoRoman Regular", 24 * -1))
+image_image_1 = PhotoImage(
+    file=relative_to_assets("image_1.png"))
+image_1 = canvas.create_image(
+    86.0,
+    78.0,
+    image=image_image_1
+)
 
-    button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
-    button_8 = Button(image=button_image_8,borderwidth=0,highlightthickness=0,command=lambda:edit_file(window),relief="flat")
-    button_8.place(x=107.0,y=345.0,width=820.0,height=60.0)
+button_image_1 = PhotoImage(
+    file=relative_to_assets("button_1.png"))
+button_1 = Button(
+    image=button_image_1,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: print("button_1 clicked"),
+    relief="flat"
+)
+button_1.place(
+    x=1119.0,
+    y=56.0,
+    width=58.0,
+    height=58.0
+)
 
-    button_image_9 = PhotoImage(file=relative_to_assets("button_9.png"))
-    button_9 = Button(image=button_image_9,borderwidth=0,highlightthickness=0,command=lambda:print("button_9 clicked"),relief="flat")
-    button_9.place(x=107.0,y=421.0,width=820.0,height=60.0)
+button_image_2 = PhotoImage(
+    file=relative_to_assets("button_2.png"))
+button_2 = Button(
+    image=button_image_2,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: book_now_button(window),
+    relief="flat"
+)
+button_2.place(
+    x=948.0,
+    y=61.0,
+    width=145.0,
+    height=47.0
+)
 
-    button_image_10 = PhotoImage(file=relative_to_assets("button_10.png"))
-    button_10 = Button(image=button_image_10,borderwidth=0,highlightthickness=0,command=lambda: print("button_10 clicked"),relief="flat")
-    button_10.place(x=107.0,y=497.0,width=820.0,height=60.0)
+button_image_3 = PhotoImage(
+    file=relative_to_assets("button_3.png"))
+button_3 = Button(
+    image=button_image_3,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: view_booking_button(window),
+    relief="flat"
+)
+button_3.place(
+    x=124.0,
+    y=250.0,
+    width=972.2060546875,
+    height=71.55624389648438
+)
 
-    button_image_11 = PhotoImage(file=relative_to_assets("button_11.png"))
-    button_11 = Button(image=button_image_11,borderwidth=0,highlightthickness=0,command=lambda:log_out(window),relief="flat")
-    button_11.place(x=461.0,y=594.0,width=108.0,height=56.0)
+button_image_4 = PhotoImage(
+    file=relative_to_assets("button_4.png"))
+button_4 = Button(
+    image=button_image_4,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: notifications_button(window),
+    relief="flat"
+)
+button_4.place(
+    x=124.0,
+    y=405.0,
+    width=972.2060546875,
+    height=71.55624389648438
+)
 
-    window.resizable(False, False)
-    window.mainloop()
+button_image_5 = PhotoImage(
+    file=relative_to_assets("button_5.png"))
+button_5 = Button(
+    image=button_image_5,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: history_button(window),
+    relief="flat"
+)
+button_5.place(
+    x=124.0,
+    y=554.07568359375,
+    width=972.2060546875,
+    height=71.55624389648438
+)
 
-if __name__ == "__main__":
-    show_profile_page()
+button_image_6 = PhotoImage(
+    file=relative_to_assets("button_6.png"))
+button_6 = Button(
+    image=button_image_6,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: log_out_button(window),
+    relief="flat"
+)
+button_6.place(
+    x=547.0,
+    y=681.0,
+    width=128.0,
+    height=67.0
+)
 
+button_image_8 = PhotoImage(
+    file=relative_to_assets("button_8.png"))
+button_8 = Button(
+    image=button_image_8,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: promo_button(window),
+    relief="flat"
+)
+button_8.place(
+    x=815.0,
+    y=58.0,
+    width=107.0,
+    height=62.0
+)
+
+button_image_9 = PhotoImage(
+    file=relative_to_assets("button_9.png"))
+button_9 = Button(
+    image=button_image_9,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda:cars_button(window),
+    relief="flat"
+)
+button_9.place(
+    x=732.0,
+    y=58.0,
+    width=83.0,
+    height=62.0
+)
+window.resizable(False, False)
+window.mainloop()
