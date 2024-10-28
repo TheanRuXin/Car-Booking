@@ -8,7 +8,9 @@ from pathlib import Path
 # from tkinter import *
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-
+import sqlite3
+from PIL import Image, ImageTk
+import subprocess
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame1")
@@ -17,12 +19,108 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def promo_button(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+
+def profile_button(window):
+    window.destroy()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+
+def connect_db():
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    return conn
+
+# Modified search_cars to display directly on canvas
+def search_cars():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    query = "SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1"
+    parameters = []
+
+    car_model = car_model_entry.get().lower()
+    min_price = min_price_entry.get()
+    max_price = max_price_entry.get()
+    seats = seats_entry.get()
+
+    if car_model:
+        query += " AND LOWER(make_and_model) LIKE ?"
+        parameters.append(f"%{car_model}%")
+    if min_price:
+        query += " AND daily_rate >= ?"
+        parameters.append(int(min_price))
+    if max_price:
+        query += " AND daily_rate <= ?"
+        parameters.append(int(max_price))
+    if seats:
+        query += " AND seating_capacity = ?"
+        parameters.append(int(seats))
+
+
+    cursor.execute(query, parameters)
+    filtered_cars = cursor.fetchall()
+    conn.close()
+
+    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]} for car in filtered_cars]
+    display_car_details(car_details)
+
+def display_car_details(car_data):
+    canvas.delete("car_detail")  # Clear previous details
+    canvas.image_references = [] # Create a list to hold image references
+
+    coords = [
+        (316.0, 140.0, 578.0, 309.0),
+        (614.0, 140.0, 877.0, 309.0),
+        (913.0, 140.0, 1175.0, 309.0),
+        (316.0, 353.0, 578.0, 522.0),
+        (614.0, 353.0, 877.0, 522.0),
+        (913.0, 353.0, 1175.0, 522.0),
+        (316.0, 566.0, 578.0, 735.0),
+        (614.0, 566.0, 877.0, 735.0),
+        (913.0, 566.0, 1175.0, 735.0),
+    ]
+
+    for i, car in enumerate(car_data):
+        if i >= len(coords):
+            break  # Exit if more cars than the available rectangles
+
+        x1, y1, x2, y2 = coords[i]
+
+        # Load the image
+        if car['image']:
+            try:
+                car_image = Image.open(car['image'])
+                car_image = car_image.resize((150, 110), Image.LANCZOS)
+                car_image = ImageTk.PhotoImage(car_image)
+                canvas.image_references.append(car_image)
+                canvas.create_image(x1 + 110, y1 + 2, anchor="nw", image=car_image, tags="car_detail")
+
+            except Exception as e:
+                print(f"Error loading image for {car['brand']}: {e}")
+
+        # Display car details
+        canvas.create_text((x1 + 20, y1 + 80), text=f"{car['brand']}", font=("Helvetica", 13, "bold"), anchor="nw", tags="car_detail")
+        canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+        canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Car Type: {car['car_type']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+        canvas.create_text((x1 + 20, y1 + 140), text=f"Transmission: {car['transmission']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+
+def load_all_cars():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars_details")
+    car_data = cursor.fetchall()
+    conn.close()
+
+    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]}for car in car_data]
+    display_car_details(car_details)
+
 
 window = Tk()
 
 window.geometry("1221x773")
 window.configure(bg = "#FFFFFF")
-
 
 canvas = Canvas(window,bg = "#FFFFFF",
 height = 773,
@@ -55,7 +153,7 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=lambda: profile_button(window),
     relief="flat"
 )
 button_1.place(
@@ -81,21 +179,7 @@ button_2.place(
     height=40.0
 )
 
-button_image_3 = PhotoImage(
-    file=relative_to_assets("button_3.png"))
-button_3 = Button(
-    image=button_image_3,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_3 clicked"),
-    relief="flat"
-)
-button_3.place(
-    x=700.0,
-    y=30.0,
-    width=84.0,
-    height=52.0
-)
+
 
 button_image_4 = PhotoImage(
     file=relative_to_assets("button_4.png"))
@@ -103,7 +187,7 @@ button_4 = Button(
     image=button_image_4,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_4 clicked"),
+    command=lambda: promo_button(window),
     relief="flat"
 )
 button_4.place(
@@ -163,13 +247,13 @@ entry_bg_1 = canvas.create_image(
     356.5,
     image=entry_image_1
 )
-entry_1 = Entry(
-    bd=0,
+car_model_entry = Entry(
+    bd=1,
     bg="#FFFFFF",
     fg="#000716",
     highlightthickness=0
 )
-entry_1.place(
+car_model_entry.place(
     x=54.0,
     y=339.0,
     width=177.0,
@@ -192,13 +276,13 @@ entry_bg_2 = canvas.create_image(
     439.5,
     image=entry_image_2
 )
-entry_2 = Entry(
-    bd=0,
+min_price_entry = Entry(
+    bd=1,
     bg="#FFFFFF",
     fg="#000716",
     highlightthickness=0
 )
-entry_2.place(
+min_price_entry.place(
     x=52.0,
     y=422.0,
     width=177.0,
@@ -214,20 +298,14 @@ canvas.create_text(
     font=("KaiseiDecol Medium", 16 * -1)
 )
 
-entry_image_3 = PhotoImage(
-    file=relative_to_assets("entry_3.png"))
-entry_bg_3 = canvas.create_image(
-    140.5,
-    605.0,
-    image=entry_image_3
-)
-entry_3 = Entry(
-    bd=0,
+
+seats_entry = Entry(
+    bd=1,
     bg="#FFFFFF",
     fg="#000716",
     highlightthickness=0
 )
-entry_3.place(
+seats_entry.place(
     x=52.0,
     y=588.0,
     width=177.0,
@@ -243,20 +321,13 @@ canvas.create_text(
     font=("KaiseiDecol Medium", 16 * -1)
 )
 
-entry_image_4 = PhotoImage(
-    file=relative_to_assets("entry_4.png"))
-entry_bg_4 = canvas.create_image(
-    140.5,
-    522.0,
-    image=entry_image_4
-)
-entry_4 = Entry(
-    bd=0,
+max_price_entry = Entry(
+    bd=1,
     bg="#FFFFFF",
     fg="#000716",
     highlightthickness=0
 )
-entry_4.place(
+max_price_entry.place(
     x=52.0,
     y=505.0,
     width=177.0,
@@ -269,7 +340,7 @@ button_6 = Button(
     image=button_image_6,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_6 clicked"),
+    command=lambda: search_cars(),
     relief="flat"
 )
 button_6.place(
@@ -281,19 +352,13 @@ button_6.place(
 
 canvas.create_rectangle(
     33.0,
-    246.0,
+    240.0,
     249.0,
-    719.0,
-    fill="#B0B0B0",
-    outline="")
+    730.0,
+    outline="#BEB4B4",
+    width=2
+)
 
-canvas.create_rectangle(
-    316.0,
-    140.0,
-    578.0,
-    309.0,
-    fill="#FFFDFD",
-    outline="")
 
 image_image_2 = PhotoImage(
     file=relative_to_assets("image_2.png"))
@@ -302,133 +367,17 @@ image_2 = canvas.create_image(
     194.0,
     image=image_image_2
 )
+canvas.create_rectangle(316.0, 140.0, 578.0, 309.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(614.0, 140.0, 877.0, 309.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(913.0, 140.0, 1175.0, 309.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(316.0, 353.0, 578.0, 522.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(614.0, 353.0, 877.0, 522.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(913.0, 353.0, 1175.0, 522.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(316.0, 566.0, 578.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(614.0, 566.0, 877.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
+canvas.create_rectangle(913.0, 566.0, 1175.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
 
-canvas.create_rectangle(
-    614.0,
-    140.0,
-    877.0,
-    309.0,
-    fill="#FFFDFD",
-    outline="")
 
-canvas.create_rectangle(
-    913.0,
-    140.0,
-    1175.0,
-    309.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    316.0,
-    353.0,
-    578.0,
-    522.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    614.0,
-    353.0,
-    877.0,
-    522.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    913.0,
-    353.0,
-    1175.0,
-    522.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    316.0,
-    566.0,
-    578.0,
-    735.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    614.0,
-    566.0,
-    877.0,
-    735.0,
-    fill="#FFFDFD",
-    outline="")
-
-canvas.create_rectangle(
-    913.0,
-    566.0,
-    1175.0,
-    735.0,
-    fill="#FFFDFD",
-    outline="")
-
-image_image_3 = PhotoImage(
-    file=relative_to_assets("image_3.png"))
-image_3 = canvas.create_image(
-    746.0,
-    194.0,
-    image=image_image_3
-)
-
-image_image_4 = PhotoImage(
-    file=relative_to_assets("image_4.png"))
-image_4 = canvas.create_image(
-    1044.0,
-    194.0,
-    image=image_image_4
-)
-
-image_image_5 = PhotoImage(
-    file=relative_to_assets("image_5.png"))
-image_5 = canvas.create_image(
-    1043.0,
-    410.0,
-    image=image_image_5
-)
-
-image_image_6 = PhotoImage(
-    file=relative_to_assets("image_6.png"))
-image_6 = canvas.create_image(
-    746.0,
-    410.0,
-    image=image_image_6
-)
-
-image_image_7 = PhotoImage(
-    file=relative_to_assets("image_7.png"))
-image_7 = canvas.create_image(
-    447.0,
-    410.0,
-    image=image_image_7
-)
-
-image_image_8 = PhotoImage(
-    file=relative_to_assets("image_8.png"))
-image_8 = canvas.create_image(
-    446.0,
-    623.0,
-    image=image_image_8
-)
-
-image_image_9 = PhotoImage(
-    file=relative_to_assets("image_9.png"))
-image_9 = canvas.create_image(
-    746.0,
-    623.0,
-    image=image_image_9
-)
-
-image_image_10 = PhotoImage(
-    file=relative_to_assets("image_10.png"))
-image_10 = canvas.create_image(
-    1044.0,
-    623.0,
-    image=image_image_10
-)
 window.resizable(False, False)
+load_all_cars()
 window.mainloop()
