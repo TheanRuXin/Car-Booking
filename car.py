@@ -10,25 +10,24 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 import sqlite3
 from PIL import Image, ImageTk
-import subprocess
+import subprocess, sys
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame1")
-
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame1")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def promo_button(window):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+    subprocess.Popen(["python","promo.py"])
 
 def profile_button(window):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+    subprocess.Popen(["python", "Profile.py"])
 
 def connect_db():
-    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
     return conn
 
 # Modified search_cars to display directly on canvas
@@ -36,7 +35,7 @@ def search_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = "SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1"
+    query = "SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE 1=1"
     parameters = []
 
     car_model = car_model_entry.get().lower()
@@ -104,12 +103,26 @@ def display_car_details(car_data):
         canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Car Type: {car['car_type']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 140), text=f"Transmission: {car['transmission']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+        # Modify the BOOK button to pass car details
+        book_button = Button(
+            window,
+            text="BOOK",
+            font=("Helvetica", 10),
+            bg="black",
+            fg="white",
+            command=lambda:book_a_car(window)
+        )
+        canvas.create_window(x1 + 200, y1 + 130, anchor="nw", window=book_button, tags="car_detail")
+
+def book_a_car(window):
+    window.destroy()
+    subprocess.Popen(["python", r"C:\car rental booking system\Car-Booking\car.py"])
 
 def load_all_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars_details")
+    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars")
     car_data = cursor.fetchall()
     conn.close()
 
@@ -123,7 +136,7 @@ window.geometry("1221x773")
 window.configure(bg = "#FFFFFF")
 
 canvas = Canvas(window,bg = "#FFFFFF",
-height = 773,
+    height = 773,
     width = 1221,
     bd = 0,
     highlightthickness = 0,
@@ -178,8 +191,6 @@ button_2.place(
     width=132.0,
     height=40.0
 )
-
-
 
 button_image_4 = PhotoImage(
     file=relative_to_assets("button_4.png"))
