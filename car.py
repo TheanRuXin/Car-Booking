@@ -30,6 +30,11 @@ def connect_db():
     conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
     return conn
 
+def open_booking_page(car_id):
+    window.withdraw()
+    # Pass car_id as an argument
+    subprocess.Popen([sys.executable, "booking_form.py", str(car_id)])
+
 # Modified search_cars to display directly on canvas
 def search_cars():
     conn = connect_db()
@@ -103,30 +108,26 @@ def display_car_details(car_data):
         canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Car Type: {car['car_type']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 140), text=f"Transmission: {car['transmission']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
-        # Modify the BOOK button to pass car details
+
         book_button = Button(
             window,
             text="BOOK",
             font=("Helvetica", 10),
             bg="black",
             fg="white",
-            command=lambda:book_a_car(window)
+            command=lambda car_id=car['id']:open_booking_page(car_id)
         )
         canvas.create_window(x1 + 200, y1 + 130, anchor="nw", window=book_button, tags="car_detail")
-
-def book_a_car(window):
-    window.destroy()
-    subprocess.Popen(["python", r"C:\car rental booking system\Car-Booking\car.py"])
 
 def load_all_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars")
+    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars")
     car_data = cursor.fetchall()
     conn.close()
 
-    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]}for car in car_data]
+    car_details = [{'id': car[0], 'brand': car[1], 'price': car[2], 'seats': car[3], 'car_type': car[4], 'transmission': car[5], 'image': car[6]}for car in car_data]
     display_car_details(car_details)
 
 
@@ -388,7 +389,7 @@ canvas.create_rectangle(316.0, 566.0, 578.0, 735.0, fill="#FFFDFD", outline="gre
 canvas.create_rectangle(614.0, 566.0, 877.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
 canvas.create_rectangle(913.0, 566.0, 1175.0, 735.0, fill="#FFFDFD", outline="grey", width=1)
 
+load_all_cars()
 
 window.resizable(False, False)
-load_all_cars()
 window.mainloop()
