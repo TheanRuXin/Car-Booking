@@ -40,7 +40,7 @@ def search_cars():
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = "SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE 1=1"
+    query = "SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE 1=1"
     parameters = []
 
     car_model = car_model_entry.get().lower()
@@ -66,7 +66,7 @@ def search_cars():
     filtered_cars = cursor.fetchall()
     conn.close()
 
-    car_details = [{'brand': car[0], 'price': car[1], 'seats': car[2], 'car_type': car[3], 'transmission': car[4], 'image': car[5]} for car in filtered_cars]
+    car_details = [{'id': car[0],'brand': car[1], 'price': car[2], 'seats': car[3], 'car_type': car[4], 'transmission': car[5], 'image': car[6]} for car in filtered_cars]
     display_car_details(car_details)
 
 def display_car_details(car_data):
