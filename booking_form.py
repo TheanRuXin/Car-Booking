@@ -3,11 +3,12 @@
 from pathlib import Path
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, Label,messagebox,PhotoImage
+from tkinter import Tk, Canvas, Entry, Text, Button, Label,messagebox,PhotoImage,StringVar,ttk
 import sqlite3, sys, subprocess
 # Capture the car_id from the command-line argument
 from PIL import Image, ImageTk
 from datetime import datetime
+from tkcalendar import DateEntry
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build\assets\frame0")
@@ -33,9 +34,12 @@ def create_bookings_table():
                 date_of_birth TEXT,    
                 rental_start_date TEXT,    
                 rental_end_date TEXT,
+                promotion TEXT,
                 total_price REAL,
                 status TEXT DEFAULT 'Pending',
-                FOREIGN KEY(car_id) REFERENCES cars(id)
+                FOREIGN KEY(car_id) REFERENCES cars(id),
+                user_id INTEGER,
+                FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
         conn.commit()
@@ -63,6 +67,25 @@ def get_selected_car_details(car_id):
     conn.close()
     return car
 
+def get_user_id(email, password):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE email=? AND password=?", (email, password))
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        return user[0]  # Return user ID if found
+    else:
+        return None
+
+def fetch_promotions():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT promo_code, discount_percentage FROM promotions")
+    promotions = cursor.fetchall()  # Returns a list of tuples [(code, discount), ...]
+    conn.close()
+    return promotions
+
 def create_booking_page(car_id):
     # Create the Tkinter window once
     global window
@@ -75,15 +98,6 @@ def create_booking_page(car_id):
         return
 
     make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path = car_details
-
-    selected_car = {
-        'make_and_model': make_and_model,
-        'daily_rate': daily_rate,
-        'seating_capacity': seating_capacity,
-        'car_type': car_type,
-        'transmission_type': transmission_type,
-        'image_path': image_path
-    }
 
     # Canvas creation for layout
     canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
@@ -167,22 +181,6 @@ def create_booking_page(car_id):
             height=40.0
         )
 
-    button_image_3 = PhotoImage(
-            file=relative_to_assets("button_3.png"))
-    button_3 = Button(
-            image=button_image_3,
-            borderwidth=0,
-            highlightthickness=0,
-            command=lambda: print("button_3 clicked"),
-            relief="flat"
-        )
-    button_3.place(
-            x=700.0,
-            y=30.0,
-            width=84.0,
-            height=52.0
-        )
-
     button_image_4 = PhotoImage(
              file=relative_to_assets("button_4.png"))
     button_4 = Button(
@@ -221,7 +219,7 @@ def create_booking_page(car_id):
             anchor="nw",
             text="BOOK A CAR",
             fill="#000000",
-            font=("KaiseiDecol Medium", 30 * -1)
+            font=("Century", 30 * -1)
         )
 
     canvas.create_text(
@@ -316,6 +314,16 @@ def create_booking_page(car_id):
             width=277.0,
             height=28.0
         )
+    promotion_var = StringVar()
+    # Fetch promotions from the database
+    promotions = fetch_promotions()
+    promo_options = ["None"] + [f"{code} ({discount}%)" for code, discount in promotions]
+
+    # Promotion Dropdown
+    Label(window, text="Select Promotion:", font=("KaiseiDecol Medium", 20 * -1), bg="#FFFFFF").place(x=547, y=508)
+    promotion_dropdown = ttk.Combobox(window, textvariable=promotion_var, values=promo_options, state="readonly")
+    promotion_dropdown.current(0)  # Default to "None"
+    promotion_dropdown.place(x=880, y=510, width=277, height=28)
 
     button_image_6 = PhotoImage(
         file=relative_to_assets("button_6.png"))
@@ -323,7 +331,7 @@ def create_booking_page(car_id):
         image=button_image_6,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda:submit_booking(),
+        command=lambda:submit_booking(user_id),
         relief="flat"
     )
     book_button.place(
@@ -347,9 +355,13 @@ def create_booking_page(car_id):
         width=104.0,
         height=49.0
     )
+
+    # Car details labels
+    Label(window, text=f"{make_and_model}", font=("Arial", 14, "bold"), bg="#FFFFFF").place(x=50, y=200)
+    Label(window, text=f"Price: RM {daily_rate}", font=("Arial", 12), bg="#FFFFFF").place(x=50, y=230)
+    Label(window, text=f"Seats: {seating_capacity}", font=("Arial", 12), bg="#FFFFFF").place(x=50, y=260)
     label_breakdown = Label(window, text="", font=("Times New Roman", 14),bg="white",justify="left")
     label_breakdown.place(x=700, y=180)
-    # Dictionary to store selected car details for total price calculation
 
     def calculate_total_price(car_id):
         conn = None
@@ -359,13 +371,18 @@ def create_booking_page(car_id):
             end_date = ren_end_entry.get()
 
             # Convert dates to datetime objects to calculate days
-            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            current_date = datetime.today().date()
             days = (end_date_obj - start_date_obj).days
 
             # Check if the rental period is valid
-            if days < 1:
-                label_breakdown.config(text="Error: End date must be after start date.")
+            if end_date_obj < start_date_obj:
+                messagebox.showerror("Error","End date must be after start date.")
+                return None
+
+            if start_date_obj < current_date:
+                messagebox.showerror("Error", "Start date cannot be in the past.")
                 return None
 
             # Connect to the database to get the daily rate for the selected car
@@ -374,34 +391,25 @@ def create_booking_page(car_id):
 
             # Fetch daily rental price based on car ID or type (use appropriate query as needed)
             cursor.execute("SELECT daily_rate FROM cars WHERE id = ?", (car_id,))
-            result = cursor.fetchone()
-
-            if result:
-                daily_rate = result[0]
-            else:
-                print("Car not found in database.")
-                return None
-
-                # Calculate total rental price
+            daily_rate = cursor.fetchone()[0]
             total_price = days * daily_rate
-            print(f"Total Price: {total_price}")
 
-            # Display the total price on the GUI
-            label_breakdown.config(text=f"Rental Days: {days} days\n\nDaily Rate: RM {daily_rate}\n\nTotal Price: RM {total_price}")
-            window.update()
+            selected_promo = promotion_var.get()
+            discount = 0
+            if selected_promo != "None":
+                for code, discount_pct in promotions:
+                    if f"{code} ({discount_pct}%)" == selected_promo:
+                        discount = discount_pct / 100
+                        break
+            total_price *= (1 - discount)
 
-            return total_price
+            label_breakdown.config(
+                text=f"Rental Days: {days} days\nDaily Rate: RM {daily_rate}\nDiscount: {int(discount * 100)}%\nTotal Price: RM {total_price:.2f}")
+            conn.close()
+            return total_price  # Return total price and discount percentage
 
-        except ValueError as ve:
-            print(f"Date format error: {ve}")
-            label_breakdown.config(text="Error: Please enter dates in YYYY-MM-DD format.")
-
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-
-        finally:
-            if conn:  # Only attempt to close conn if it was successfully assigned
-                conn.close()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     calculate_button = Button(
         window,
@@ -417,11 +425,12 @@ def create_booking_page(car_id):
         width=65.0,
         height=30.0
     )
-    ren_start_entry = Entry(
+    ren_start_entry = DateEntry(
         bd=0,
         bg="#D9D9D9",
         fg="#000716",
         highlightthickness=0,
+        date_pattern="yyyy-mm-dd"
     )
     ren_start_entry.place(
         x=880.0,
@@ -443,11 +452,12 @@ def create_booking_page(car_id):
         height=29.0
     )
 
-    ren_end_entry = Entry(
+    ren_end_entry = DateEntry(
         bd=0,
         bg="#D9D9D9",
         fg="#000716",
         highlightthickness=0,
+        date_pattern="yyyy-mm-dd"
     )
     ren_end_entry.place(
         x=880.0,
@@ -456,7 +466,7 @@ def create_booking_page(car_id):
         height=28.0
     )
 
-    def submit_booking():
+    def submit_booking(user_id):
         # Retrieve the data from the form
         customer_name = name_entry.get().strip()
         email = email_entry.get().strip()
@@ -464,17 +474,18 @@ def create_booking_page(car_id):
         date_of_birth = birthdate_entry.get().strip()
         rental_start_date = ren_start_entry.get().strip()
         rental_end_date = ren_end_entry.get().strip()
+        selected_promotion = promotion_var.get() or ""
 
         # Check if any of the fields are empty
-        if not customer_name or not email or not contact_number or not date_of_birth or not rental_start_date or not rental_end_date:
+        if not customer_name or not email or not contact_number or not date_of_birth or not rental_start_date or not rental_end_date or not selected_promotion:
             messagebox.showerror("Error", "Please fill in all fields.")  # Show error if any field is empty
             return
 
         # Validate that rental start and end dates are valid (optional)
         # Assuming the format for the dates is 'YYYY-MM-DD'
         try:
-            start_date = datetime.strptime(rental_start_date, '%Y-%m-%d')
-            end_date = datetime.strptime(rental_end_date, '%Y-%m-%d')
+            start_date = datetime.strptime(rental_start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(rental_end_date, '%Y-%m-%d').date()
 
             if end_date < start_date:
                 messagebox.showerror("Error", "End date cannot be earlier than start date.")
@@ -493,8 +504,8 @@ def create_booking_page(car_id):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO bookings (car_id, customer_name, email, contact_number, date_of_birth, rental_start_date, rental_end_date, total_price)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO bookings (car_id, customer_name, email, contact_number, date_of_birth, rental_start_date, rental_end_date, promotion, total_price, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             car_id,
             customer_name,
@@ -503,7 +514,9 @@ def create_booking_page(car_id):
             date_of_birth,
             rental_start_date,
             rental_end_date,
-            total_price
+            selected_promotion,
+            total_price,
+            user_id
         ))
 
         conn.commit()
