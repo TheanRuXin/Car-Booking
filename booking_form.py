@@ -28,6 +28,7 @@ def create_bookings_table():
             CREATE TABLE IF NOT EXISTS bookings (
                 booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 car_id INTEGER,
+                user_id INTEGER,
                 customer_name TEXT,
                 email TEXT,
                 contact_number TEXT,     
@@ -38,7 +39,6 @@ def create_bookings_table():
                 total_price REAL,
                 status TEXT DEFAULT 'Pending',
                 FOREIGN KEY(car_id) REFERENCES cars(id),
-                user_id INTEGER,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
@@ -67,17 +67,6 @@ def get_selected_car_details(car_id):
     conn.close()
     return car
 
-def get_user_id(email, password):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE email=? AND password=?", (email, password))
-    user = cursor.fetchone()
-    conn.close()
-    if user:
-        return user[0]  # Return user ID if found
-    else:
-        return None
-
 def fetch_promotions():
     conn = connect_db()
     cursor = conn.cursor()
@@ -86,7 +75,22 @@ def fetch_promotions():
     conn.close()
     return promotions
 
-def create_booking_page(car_id):
+def get_user_id_from_db(user_id):
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM Users_details WHERE user_id=?", (user_id))
+    user_id = cursor.fetchone()
+    conn.close()
+
+    if user_id:
+        return user_id[0]
+    else:
+        return None
+
+def create_booking_page(car_id, user_id):
+    if user_id is None:
+        messagebox.showerror("Error", "User is not authenticated.")
+        return
     # Create the Tkinter window once
     global window
     if 'window' not in globals() or not window.winfo_exists():
@@ -340,7 +344,6 @@ def create_booking_page(car_id):
         width=104.0,
         height=49.0
     )
-
     back_button = Button(
         window,
         text="BACK",
@@ -364,7 +367,6 @@ def create_booking_page(car_id):
     label_breakdown.place(x=700, y=180)
 
     def calculate_total_price(car_id):
-        conn = None
         try:
             # Fetch rental dates from the GUI
             start_date = ren_start_entry.get()
@@ -476,7 +478,7 @@ def create_booking_page(car_id):
         rental_end_date = ren_end_entry.get().strip()
         selected_promotion = promotion_var.get() or ""
 
-        # Check if any of the fields are empty
+    # Check if any of the fields are empty
         if not customer_name or not email or not contact_number or not date_of_birth or not rental_start_date or not rental_end_date or not selected_promotion:
             messagebox.showerror("Error", "Please fill in all fields.")  # Show error if any field is empty
             return
@@ -500,42 +502,42 @@ def create_booking_page(car_id):
             messagebox.showerror("Error", "Could not calculate total price.")
             return
 
-        # Insert booking into the database
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO bookings (car_id, customer_name, email, contact_number, date_of_birth, rental_start_date, rental_end_date, promotion, total_price, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            car_id,
-            customer_name,
-            email,
-            contact_number,
-            date_of_birth,
-            rental_start_date,
-            rental_end_date,
-            selected_promotion,
-            total_price,
-            user_id
-        ))
+        try:
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO bookings (car_id, user_id, customer_name, email, contact_number, date_of_birth, rental_start_date, rental_end_date, promotion, total_price, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                car_id,
+                user_id,
+                customer_name,
+                email,
+                contact_number,
+                date_of_birth,
+                rental_start_date,
+                rental_end_date,
+                selected_promotion,
+                total_price,
+                "Pending"
+            ))
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
 
-        # Show success message
-        messagebox.showinfo("Success", "Booking submitted successfully!")
+            # Show success message
+            messagebox.showinfo("Success", "Booking submitted successfully!")
 
-        # Close the booking window after submission
-        window.destroy()
+            # Close the booking window after submission
+            window.destroy()
+
+        except sqlite3.Error as e:
+            messagebox.showerror("Database Error", f"An error occurred: {e}")
 
     window.resizable(False, False)
     window.mainloop()
 
 if __name__ == "__main__":
-    # Check if car_id was passed as a command-line argument
-    if len(sys.argv) > 1:
-        car_id = int(sys.argv[1])  # Convert the argument to an integer
-    else:
-        car_id = 1  # Default to a specific car_id if none is passed
-
-    create_booking_page(car_id)
+    car_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    user_id = 1  # Set user_id to a default value, or retrieve it as needed
+    create_booking_page(car_id, user_id)
