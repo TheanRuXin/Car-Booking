@@ -1,0 +1,175 @@
+from pathlib import Path
+import customtkinter as ctk
+from tkinter import messagebox
+import sqlite3
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,Label , messagebox
+from PIL import Image, ImageTk
+import sys
+# Define asset paths
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\build\assets\frame0")
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+def connect_db():
+    return sqlite3.connect('Car_Rental.db')
+
+def promo_button():
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+
+def cars_button():
+    window.destroy()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
+
+def profile_page():
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+
+def show_car_details(car_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE id = ?", (car_id,))
+    car_details = cursor.fetchone()
+    conn.close()
+
+    if car_details:
+        display_car_details(car_details)
+    else:
+        messagebox.showerror("Error", "Car details not found!")
+
+def display_car_details(car_details):
+    car_id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path = car_details
+
+    # Display image
+    if image_path:
+        try:
+            pil_image = Image.open(image_path)
+            resized_image = pil_image.resize((300, 300), Image.LANCZOS)
+            image_to_display = ImageTk.PhotoImage(resized_image)
+            label_car_image.configure(image=image_to_display)
+            label_car_image.image = image_to_display
+        except Exception as e:
+            print(f"Error loading image: {e}")
+
+    # Display car information
+    canvas.create_text(800, 100, anchor="nw", text=f"Make and Model: {make_and_model}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+    canvas.create_text(800, 140, anchor="nw", text=f"Daily Rate: RM {daily_rate}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+    canvas.create_text(800, 180, anchor="nw", text=f"Seating Capacity: {seating_capacity}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+    canvas.create_text(800, 220, anchor="nw", text=f"Car Type: {car_type}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+    canvas.create_text(800, 260, anchor="nw", text=f"Transmission: {transmission_type}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+
+def get_selected_car_id():
+    if len(sys.argv) > 1:
+        return int(sys.argv[1])  # Assuming car_id is passed as the first argument
+    else:
+        messagebox.showerror("Error", "No car ID provided!")
+        return None
+
+car_id = get_selected_car_id()
+if car_id:
+    show_car_details(car_id)
+
+# Set appearance for customtkinter
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
+
+# Function to submit the review
+def submit_review():
+    customer_name = name_entry.get().strip()
+    review_text = review_entry.get("1.0", ctk.END).strip()
+    rating = rating_var.get()
+    if not customer_name or not review_text or rating == 0:
+        messagebox.showerror("Error", "All fields are required!")
+        return
+    try:
+        conn = sqlite3.connect('Car_Rental.db')  # Changed database to Car_Rental.db
+        cursor = conn.cursor()
+        cursor.execute('''
+        INSERT INTO Reviews (car_id, customer_name, review, rating)
+        VALUES (?, ?, ?, ?)
+        ''', (1, customer_name, review_text, rating))  # Assuming car_id is 1 for simplicity
+        conn.commit()
+        conn.close()
+        messagebox.showinfo("Success", "Review submitted successfully!")
+        name_entry.delete(0, ctk.END)
+        review_entry.delete("1.0", ctk.END)
+        clear_stars()
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+# Clear rating stars
+def clear_stars():
+    rating_var.set(0)
+    update_star_display()
+
+# Update star display based on rating
+def update_star_display():
+    rating = rating_var.get()
+    for i in range(5):
+        if i < rating:
+            star_buttons[i].configure(text="★")  # Filled star
+        else:
+            star_buttons[i].configure(text="☆")  # Empty star
+
+# Set rating and update stars
+def set_star_rating(value):
+    rating_var.set(value)
+    update_star_display()
+
+window = Tk()
+window.geometry("1221x773")
+window.configure(bg = "#FFFFFF")
+canvas = Canvas(window,height = 773,width = 1221,bd = 0,highlightthickness = 0,relief = "ridge")
+canvas.place(x = 0, y = 0)
+canvas.create_rectangle(0.0,0.0,1221.0,113.0,fill="#DFDFDF",outline="")
+image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+image_1 = canvas.create_image(86.0,57.0,image=image_image_1)
+
+button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
+button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0,
+                      command=lambda: print("button_1 clicked"), relief="flat")
+button_1.place(x=1126.0, y=31.0, width=49.0, height=49.0)
+
+button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
+button_2 = Button(image=button_image_2, borderwidth=0, highlightthickness=0,
+                      command=lambda: print("button_2 clicked"), relief="flat")
+button_2.place(x=854.0, y=24.0, width=90.0, height=52.0)
+
+button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
+button_3 = Button(image=button_image_3, borderwidth=0, highlightthickness=0,
+                      command=lambda: print("button_3 clicked"), relief="flat")
+button_3.place(x=784.0, y=24.0, width=70.0, height=52.0)
+
+canvas.create_text(56.0, 168.0, anchor="nw", text="Rating and Reviews", fill="#000000", font=("KaiseiDecol Medium", 40 * -1))
+canvas.create_text(56.0, 250.0, anchor="nw", text="Customer Name:", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+canvas.create_text(56.0, 500.0, anchor="nw", text="Rating:", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+canvas.create_text(56.0, 350.0, anchor="nw", text="Reviews:", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
+
+label_car_image = Label(window)
+label_car_image.place(x=800, y=280, width=300, height=300)
+
+name_entry = ctk.CTkEntry(window, width=300)
+name_entry.place(x=56, y=300)
+
+review_entry = ctk.CTkEntry(window, width=300, height=100)
+review_entry.place(x=56, y=400)
+
+rating_var = ctk.IntVar(value=0)
+star_frame = ctk.CTkFrame(window)
+star_frame.place(x=56,y=600)
+
+    # Create star buttons
+star_buttons = []
+for i in range(1, 6):
+    star_button = ctk.CTkButton(star_frame, text="☆", width=40, command=lambda value=i: set_star_rating(value))
+    star_button.pack(side=ctk.LEFT, padx=5)
+    star_buttons.append(star_button)
+
+    # Submit review button
+submit_button = ctk.CTkButton(window, text="Submit Review", command=submit_review)
+submit_button.place(x=56,y=650)
+# Start the Tkinter main loop
+window.resizable(False, False)
+window.mainloop()
