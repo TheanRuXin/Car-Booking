@@ -1,0 +1,184 @@
+# Necessary imports
+import os
+import sqlite3
+import subprocess
+from pathlib import Path
+from tkinter import Tk,filedialog, messagebox, ttk, PhotoImage,Canvas,Button
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import matplotlib.pyplot as plt
+import customtkinter as ctk
+
+# Setting up paths
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+# Configure appearance for customtkinter
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
+
+# Database setup
+def create_reviews_table():
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Reviews(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        car_id INTEGER NOT NULL,
+        customer_name TEXT NOT NULL,
+        review TEXT NOT NULL,
+        rating INTEGER NOT NULL
+    )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Fetch reviews from the database based on rating
+def fetch_reviews_by_rating():
+    selected_rating = rating_var_view.get()
+    for row in tree.get_children():
+        tree.delete(row)
+
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT customer_name, review, rating FROM Reviews WHERE rating = ?", (selected_rating,))
+    reviews = cursor.fetchall()
+    conn.close()
+
+    if reviews:
+        for review in reviews:
+            tree.insert("", "end", values=(review[0], review[1], review[2]))
+    else:
+        messagebox.showinfo("No Results", "No reviews for the selected rating.")
+
+# Generate PDF report for reviews
+def generate_pdf_report():
+    conn = sqlite3.connect('Car_Rental.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT customer_name, review, rating FROM Reviews")
+    reviews = cursor.fetchall()
+    conn.close()
+
+    if reviews:
+        pdf_file = "reviews_report.pdf"
+        c = canvas.Canvas(pdf_file, pagesize=letter)
+        width, height = letter
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(100, height - 50, "Car Rental Reviews Report")
+        c.setFont("Helvetica", 12)
+        y_position = height - 100
+
+        for review in reviews:
+            c.setFont("Helvetica", 10)
+            c.drawString(100, y_position, f"Customer Name: {review[0]}")
+            c.drawString(300, y_position, f"Review: {review[1]}")
+            c.drawString(500, y_position, f"Rating: {review[2]}")
+            y_position -= 20
+
+            if y_position < 50:
+                c.showPage()
+                y_position = height - 50
+
+        c.save()
+        messagebox.showinfo("Success", f"PDF report generated: {pdf_file}")
+    else:
+        messagebox.showinfo("No Data", "No reviews available to generate the report.")
+
+# Generate bar chart showing the number of reviews per rating
+def generate_rating_graph():
+    conn = sqlite3.connect('Car_Rental.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT rating, COUNT(*) FROM Reviews GROUP BY rating")
+    ratings = cursor.fetchall()
+    conn.close()
+
+    if ratings:
+        rating_values = [r[0] for r in ratings]
+        rating_counts = [r[1] for r in ratings]
+
+        plt.bar(rating_values, rating_counts, color='blue')
+        plt.xlabel('Ratings')
+        plt.ylabel('Number of Reviews')
+        plt.title('Number of Reviews per Rating')
+        plt.xticks(rating_values)
+        plt.grid(axis='y')
+        plt.show()
+    else:
+        messagebox.showinfo("No Data", "No reviews available to generate the graph.")
+
+# Set up the main window
+window = Tk()
+window.geometry("1221x773")
+window.configure(bg = "#FFFFFF")
+
+canvas = Canvas(window,bg = "#FFFFFF",height = 773,width = 1221,bd = 0,highlightthickness = 0,relief = "ridge")
+canvas.place(x = 0, y = 0)
+
+image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+image_1 = canvas.create_image(610.0,386.0,image=image_image_1)
+canvas.create_text(600, 40, anchor="center", text="MANAGE Rating and Reviews", fill="#000000",font=("Times New Roman ExtraBold", 18))
+
+# Create the reviews table in the database (if not exists)
+create_reviews_table()
+
+# Frame for viewing reviews
+view_reviews_frame = ctk.CTkFrame(window, corner_radius=10, width=1000, height=500)
+view_reviews_frame.place(x=100, y=100)
+
+# Rating selection dropdown
+rating_label = ctk.CTkLabel(view_reviews_frame, text="Select Rating to View Reviews:", font=("Arial", 16))
+rating_label.place(x=400,y=10)
+
+# Rating selection dropdown
+rating_var_view = ctk.IntVar(value=1)
+rating_dropdown = ctk.CTkComboBox(
+    view_reviews_frame,
+    values=[str(i) for i in range(1, 6)],
+    variable=rating_var_view,
+    command=fetch_reviews_by_rating,
+    font=("Arial", 14),
+    width=200,
+)
+rating_dropdown.place(x=400, y=50)
+
+# Treeview to display reviews
+columns = ("Customer Name", "Review", "Rating")
+
+tree_frame = ctk.CTkFrame(view_reviews_frame, width=900, height=400)
+tree_frame.place(x=50, y=100)
+
+# Vertical scrollbar
+tree_scroll_y = ttk.Scrollbar(tree_frame, orient="vertical")
+tree_scroll_y.place(x=882, y=0, height=400)
+
+# Treeview with scrollbars
+tree = ttk.Treeview(
+    tree_frame,
+    columns=columns,
+    show='headings',
+    height=15,
+    yscrollcommand=tree_scroll_y.set,
+)
+tree.place(x=0, y=0, width=880, height=400)
+
+# Configure the scrollbars
+tree_scroll_y.config(command=tree.yview)
+for col in columns:
+    tree.heading(col, text=col)
+    tree.column(col, anchor="center",width=180)
+
+# Generate PDF report button
+generate_pdf_button = ctk.CTkButton(window, text="Generate PDF Report", command=generate_pdf_report, width=150,font=("Times New Roman ExtraBold", 18))
+generate_pdf_button.place(x=200, y=650)
+
+# Generate rating graph button
+generate_graph_button = ctk.CTkButton(window, text="Generate Rating Graph", command=generate_rating_graph, width=150,font=("Times New Roman ExtraBold", 18))
+generate_graph_button.place(x=800, y=650)
+
+# Start the Tkinter main loop
+window.resizable(False, False)
+window.mainloop()
