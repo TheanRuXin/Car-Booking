@@ -226,7 +226,10 @@ def view_booking_page():
                                                       "Contact No.", "Start Date", "End Date", "Total Price",
                                                       "No. of Days", "Status"), show="headings")
 
-    # Define headings
+    scrollbar_x = ttk.Scrollbar(window, orient="horizontal", command=treeview_bookings.xview)
+    scrollbar_x.place(x=25, y=580, width=850, height=20)
+    treeview_bookings.configure(xscrollcommand=scrollbar_x.set)
+
     for col in treeview_bookings["columns"]:
         treeview_bookings.heading(col, text=col)
 
