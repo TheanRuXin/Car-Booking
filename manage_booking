@@ -1,6 +1,6 @@
 import subprocess
 from tkinter import Tk, Button, ttk, Label, messagebox, StringVar, Entry, Toplevel,Canvas,PhotoImage
-import sqlite3
+import sqlite3,os
 from PIL import Image, ImageTk
 from pathlib import Path
 
@@ -9,45 +9,14 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\agen
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
+
 # Connect to the database
 def connect_db():
     conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     return conn
 
-def display_selected_image(event):
-    selected_item = treeview_bookings.selection()
-    if selected_item:
-        item = treeview_bookings.item(selected_item)
-        car_id = item['values'][0]
-
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT image_path FROM cars_details WHERE id = ?", (car_id,))
-        image_path = cursor.fetchone()
-
-        if image_path and image_path[0]:
-            image_file = image_path[0]
-            if os.path.exists(image_file):
-                try:
-                    img = Image.open(image_file)
-                    img = img.resize((300, 300), Image.Resampling.LANCZOS)
-                    img = ImageTk.PhotoImage(img)
-
-                    # Display the image
-                    label_image.config(image=img)
-                    label_image.image = img
-                except Exception as e:
-                    print(f"Error loading image: {e}")
-                    label_image.config(image='')
-            else:
-                print("Image file does not exist.")
-                label_image.config(image='')
-        else:
-            print("No image path found in database.")
-            label_image.config(image='')
-            
 # Function to fetch and display booking details based on date range
-def show_booking_details(start_date=None, end_date=None,status=None):
+def show_booking_details(start_date=None, end_date=None):
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -63,13 +32,9 @@ def show_booking_details(start_date=None, end_date=None,status=None):
     conditions = []
     params = []
 
-    if start_date and end_date and status:
-        conditions.append('b.rental_start_date >= ? AND b.rental_end_date <= ? AND b.status = ?')
-        params.extend([start_date, end_date,status])
-
-    if status:
-        conditions.append('b.status = ?')
-        params.append(status)
+    if start_date and end_date:
+        conditions.append('b.rental_start_date >= ? AND b.rental_end_date <= ?')
+        params.extend([start_date, end_date])
 
     if conditions:
         query += ' WHERE ' + ' AND '.join(conditions)
@@ -98,16 +63,22 @@ def show_booking_details(start_date=None, end_date=None,status=None):
         )
         treeview_bookings.insert("", "end", values=formatted_row)
 
+
 def search_bookings():
     start_date = entry_start_date.get()
     end_date = entry_end_date.get()
     status = entry_status.get()
 
-    if start_date and end_date and status:
-        show_booking_details(start_date,end_date,status)
+    if start_date and end_date:
+        show_booking_details(start_date, end_date)
     else:
-        messagebox.showwarning("Input Error", "Please enter all require.")
-
+        messagebox.showwarning("Input Error", "Please enter both start date and end date.")
+        return
+    if status:
+        show_booking_details(start_date, end_date)
+    else:
+        messagebox.showwarning("Input Error", "Please enter status.")
+        return
 
 def open_booking_detail_window(booking_id):      #to approve/reject
     conn = connect_db()
@@ -164,8 +135,6 @@ def open_booking_detail_window(booking_id):      #to approve/reject
                bg="green", fg="black", font=("Arial",11)).grid(row=9, column=0, pady=10, sticky="ew")
         Button(frame, text="Reject", command=lambda: update_booking_status(booking[0], "Rejected", detail_window),
                bg="red", fg="black", font=("Arial",11)).grid(row=9, column=1, pady=10, sticky="ew")
-        Button(frame, text="DONE", command=lambda: update_booking_status(booking[0], "DONE", detail_window),
-               bg="red", fg="black", font=("Arial", 11)).grid(row=9, column=1, pady=10, sticky="ew")
 
 
 def update_booking_status(booking_id, status, detail_window):
@@ -182,12 +151,46 @@ def update_booking_status(booking_id, status, detail_window):
 
 def go_back():
     window.destroy()  # Close the current window
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\agency\agency_panel\build\agency_panel.py"])  # Open the admin panel
+    subprocess.Popen(["python", "agency_panel.py"])  # Open the admin panel
 
+def display_selected_image(event):
+    selected_item = treeview_bookings.selection()
+    if selected_item:
+        item = treeview_bookings.item(selected_item)
+        car_id = item['values'][0]
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT image_path FROM cars_details WHERE id = ?", (car_id,))
+        image_path = cursor.fetchone()
+
+        if image_path and image_path[0]:
+            image_file = image_path[0]
+            if os.path.exists(image_file):
+                try:
+                    img = Image.open(image_file)
+                    img = img.resize((300, 300), Image.Resampling.LANCZOS)
+                    img = ImageTk.PhotoImage(img)
+
+                    # Display the image
+                    label_image.config(image=img)
+                    label_image.image = img
+                except Exception as e:
+                    print(f"Error loading image: {e}")
+                    label_image.config(image='')
+            else:
+                print("Image file does not exist.")
+                label_image.config(image='')
+        else:
+            print("No image path found in database.")
+            label_image.config(image='')
 
 def view_booking_page():
-    global window,treeview_bookings, entry_start_date,entry_end_date,entry_status
+    global window, treeview_bookings, entry_start_date, entry_end_date,entry_status,label_image
     window = Tk()
+    window.geometry("1200x600")
+    window.title("Car Rental - Booking Details")
+
     window.geometry("1221x773")
     window.title("Car Rental - Booking Details")
 
@@ -197,22 +200,25 @@ def view_booking_page():
     image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
     canvas.create_image(610.0, 386.0, image=image_image_1)
 
-    canvas.create_text(600, 40, anchor="center", text="MANAGE BOOKING DETAILS", fill="#000000",font=("Times New Roman ExtraBold", 18))
+    canvas.create_text(600, 40, anchor="center", text="MANAGE BOOKING DETAILS", fill="#000000",
+                       font=("Times New Roman ExtraBold", 18))
 
     # Input fields for date range search
-    canvas.create_text(420.0, 80.0, anchor="nw", text="Start Date (YYYY-MM-DD):", fill="#000000", font=("Inter Bold", 14 * -1))
+    canvas.create_text(420.0, 80.0, anchor="nw", text="Start Date (YYYY-MM-DD):", fill="#000000",
+                       font=("Inter Bold", 14 * -1))
     entry_start_date = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
     entry_start_date.place(x=610.0, y=80.0, width=180.0, height=22.0)
 
-    canvas.create_text(420.0, 130.0, anchor="nw", text="End Date (YYYY-MM-DD):", fill="#000000",font=("Inter Bold", 14 * -1))
+    canvas.create_text(420.0, 130.0, anchor="nw", text="End Date (YYYY-MM-DD):", fill="#000000",
+                       font=("Inter Bold", 14 * -1))
     entry_end_date = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
     entry_end_date.place(x=610.0, y=130.0, width=180.0, height=22.0)
 
-    canvas.create_text(420.0, 180.0, anchor="nw", text="Status:", fill="#000000",font=("Inter Bold", 14 * -1))
+    canvas.create_text(420.0, 180.0, anchor="nw", text="Status:", fill="#000000", font=("Inter Bold", 14 * -1))
     entry_status = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
     entry_status.place(x=610.0, y=180.0, width=180.0, height=22.0)
 
-    button_search= Button(text="Search", command=search_bookings, bg="blue", fg="white", font=("Arial", 11))
+    button_search = Button(text="Search", command=search_bookings, bg="blue", fg="white", font=("Arial", 11))
     button_search.place(x=560.0, y=230.0, width=100.0, height=30.0)
 
     # Define the columns for the Treeview
@@ -226,21 +232,22 @@ def view_booking_page():
 
     # Define column widths
     for col in treeview_bookings["columns"]:
-        treeview_bookings.column(col,width=100, anchor="center")
+        treeview_bookings.column(col, width=100, anchor="center")
 
-    treeview_bookings.place(x=25, y=280, width=850, height=300)   #add treeview to GUI
+    treeview_bookings.place(x=25, y=280, width=850, height=300)  # add treeview to GUI
 
     # Bind double-click event to open booking details
     treeview_bookings.bind("<Double-1>", lambda event: open_booking_detail_window(
         treeview_bookings.item(treeview_bookings.selection())['values'][0]))
+    treeview_bookings.bind("<<TreeviewSelect>>", display_selected_image)
 
-    button_back= Button(text="Back", command=go_back, bg="orange", fg="black", font=("Arial", 11))
+    button_back = Button(text="Back", command=go_back, bg="orange", fg="black", font=("Arial", 11))
     button_back.place(x=560.0, y=630.0, width=100.0, height=30.0)
 
-    image_display = Label(window)
-    image_display.place(x=900, y=280, width=300, height=300)
+    label_image = Label(window)
+    label_image.place(x=900, y=280, width=300, height=300)
 
     window.mainloop()
 
-if __name__ == "__main__":
-    view_booking_page()
+
+view_booking_page()
