@@ -16,9 +16,9 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build\assets\fra
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def go_back():
+def go_back(user_id):
     window.destroy()
-    subprocess.Popen([sys.executable, "car.py"])
+    subprocess.Popen([sys.executable, "car.py", str(user_id)])
 
 def create_bookings_table():
     try:
@@ -75,22 +75,7 @@ def fetch_promotions():
     conn.close()
     return promotions
 
-def get_user_id_from_db(user_id):
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM Users_details WHERE user_id=?", (user_id))
-    user_id = cursor.fetchone()
-    conn.close()
-
-    if user_id:
-        return user_id[0]
-    else:
-        return None
-
-def create_booking_page(car_id, user_id):
-    if user_id is None:
-        messagebox.showerror("Error", "User is not authenticated.")
-        return
+def create_booking_page(car_id,user_id):
     # Create the Tkinter window once
     global window
     if 'window' not in globals() or not window.winfo_exists():
@@ -335,7 +320,7 @@ def create_booking_page(car_id, user_id):
         image=button_image_6,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda:submit_booking(user_id),
+        command=lambda:submit_booking(),
         relief="flat"
     )
     book_button.place(
@@ -350,7 +335,7 @@ def create_booking_page(car_id, user_id):
         font=("Helvetica", 16),
         bg="black",
         fg="white",
-        command=lambda: go_back()
+        command=lambda: go_back(user_id)
     )
     back_button.place(
         x=900.0,
@@ -468,7 +453,7 @@ def create_booking_page(car_id, user_id):
         height=28.0
     )
 
-    def submit_booking(user_id):
+    def submit_booking():
         # Retrieve the data from the form
         customer_name = name_entry.get().strip()
         email = email_entry.get().strip()
@@ -537,7 +522,12 @@ def create_booking_page(car_id, user_id):
     window.resizable(False, False)
     window.mainloop()
 
+
 if __name__ == "__main__":
-    car_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    user_id = 1  # Set user_id to a default value, or retrieve it as needed
-    create_booking_page(car_id, user_id)
+    if len(sys.argv) < 3:
+        messagebox.showerror("Error", "User ID or Car ID not provided. Please select a car again.")
+        sys.exit(1)
+
+    user_id = int(sys.argv[1])  # Get user_id from command-line arguments
+    car_id = int(sys.argv[2])  # Get car_id from command-line arguments
+    create_booking_page(user_id, car_id)
