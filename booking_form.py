@@ -11,7 +11,7 @@ from datetime import datetime
 from tkcalendar import DateEntry
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build\assets\frame0")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\booking_frame")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -22,7 +22,7 @@ def go_back(user_id):
 
 def create_bookings_table():
     try:
-        conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
         cursor = conn.cursor()
         cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS bookings (
@@ -38,8 +38,8 @@ def create_bookings_table():
                 promotion TEXT,
                 total_price REAL,
                 status TEXT DEFAULT 'Pending',
-                FOREIGN KEY(car_id) REFERENCES cars(id),
-                FOREIGN KEY(user_id) REFERENCES users(id)
+                FOREIGN KEY(car_id) REFERENCES cars_details(id),
+                FOREIGN KEY(user_id) REFERENCES Users_details(id)
             )
         ''')
         conn.commit()
@@ -56,13 +56,13 @@ window.geometry("1221x773")
 window.configure(bg="#FFFFFF")
 
 def connect_db():
-    return sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+    return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
 
 # Ensure bookings table is created
 def get_selected_car_details(car_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE id = ?", (car_id,))
+    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE id = ?", (car_id,))
     car = cursor.fetchone()
     conn.close()
     return car
@@ -137,71 +137,6 @@ def create_booking_page(car_id,user_id):
         57.0,
         image=image_image_1
     )
-
-    button_image_1 = PhotoImage(
-        file=relative_to_assets("button_1.png"))
-    button_1 = Button(
-        image=button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
-        relief="flat"
-    )
-    button_1.place(
-        x=1126.0,
-        y=31.0,
-        width=49.0,
-        height=49.0
-    )
-
-    button_image_2 = PhotoImage(
-        file=relative_to_assets("button_2.png"))
-    button_2 = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
-        relief="flat"
-    )
-    button_2.place(
-            x=969.0,
-            y=36.0,
-            width=132.0,
-            height=40.0
-        )
-
-    button_image_4 = PhotoImage(
-             file=relative_to_assets("button_4.png"))
-    button_4 = Button(
-            image=button_image_4,
-            borderwidth=0,
-            highlightthickness=0,
-            command=lambda: print("button_4 clicked"),
-            relief="flat"
-        )
-    button_4.place(
-            x=854.0,
-            y=30.0,
-            width=90.0,
-            height=52.0
-        )
-
-    button_image_5 = PhotoImage(
-            file=relative_to_assets("button_5.png"))
-    button_5 = Button(
-            image=button_image_5,
-            borderwidth=0,
-            highlightthickness=0,
-            command=lambda: print("button_5 clicked"),
-            relief="flat"
-        )
-    button_5.place(
-            x=784.0,
-            y=30.0,
-            width=70.0,
-            height=52.0
-        )
-
     canvas.create_text(
             39.0,
             125.0,
@@ -373,11 +308,11 @@ def create_booking_page(car_id,user_id):
                 return None
 
             # Connect to the database to get the daily rate for the selected car
-            conn = sqlite3.connect('Users.db')
+            conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
             cursor = conn.cursor()
 
             # Fetch daily rental price based on car ID or type (use appropriate query as needed)
-            cursor.execute("SELECT daily_rate FROM cars WHERE id = ?", (car_id,))
+            cursor.execute("SELECT daily_rate FROM cars_details WHERE id = ?", (car_id,))
             daily_rate = cursor.fetchone()[0]
             total_price = days * daily_rate
 
@@ -515,6 +450,7 @@ def create_booking_page(car_id,user_id):
 
             # Close the booking window after submission
             window.destroy()
+            subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\car.py"])
 
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"An error occurred: {e}")
