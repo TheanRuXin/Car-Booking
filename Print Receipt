@@ -1,0 +1,161 @@
+# Necessary imports
+import os
+import sqlite3
+import subprocess
+from pathlib import Path
+from tkinter import ttk,Tk,filedialog, messagebox, ttk, PhotoImage,Canvas,Button
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import matplotlib.pyplot as plt
+import customtkinter as ctk
+from datetime import datetime
+# Setting up paths
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+def connect_db():
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    return conn
+
+def show_booking_details():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT b.booking_id, c.registration_number, c.make_and_model, b.customer_name, b.contact_number, 
+               b.rental_start_date, b.rental_end_date, b.total_price, b.status
+        FROM bookings b
+        JOIN cars_details c ON b.car_id = c.id
+    ''')
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def add_header_footer(c, doc_title):
+    width, height = A4
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(40, height - 50, doc_title)  # Title at the top
+    c.setFont("Helvetica", 10)
+    c.drawString(40, height - 65, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    c.line(40, height - 70, width - 40, height - 70)  # Horizontal line under the header
+
+    # Add footer
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(40, 40, "Car Rental Services")
+    c.drawString(width - 200, 40, "Contact: info@carrental.com")
+    c.line(40, 60, width - 40, 60)  # Horizontal line above the footer
+
+    # Page number
+    c.setFont("Helvetica", 10)
+    c.drawString(width - 100, 20, f"Page {c.getPageNumber()}")
+
+
+# Generate PDF for selected booking
+def save_selected_as_pdf(selected_booking):
+    if not selected_booking:
+        messagebox.showwarning("No Selection", "Please select a booking to save.")
+        return None
+
+    pdf_filename = f"selected_booking_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    c = canvas.Canvas(pdf_filename, pagesize=A4)
+    width, height = A4
+
+    doc_title = "Car Rental Booking Details"
+    add_header_footer(c, doc_title)
+
+    c.setFont("Helvetica", 12)
+    y_position = height - 100  # Start text below the header
+
+    # Display each field vertically
+    fields = ["Booking ID", "Registration No.", "Make & Model", "Customer Name", "Contact Number",
+              "Rental Start Date", "Rental End Date", "Total Price (RM)", "Status"]
+
+    for i, field in enumerate(fields):
+        value = selected_booking[i]
+        c.drawString(40, y_position, f"{field}: {value}")
+        y_position -= 20  # Move down for the next line
+
+        # Move to next page if out of space
+        if y_position < 100:
+            c.showPage()
+            add_header_footer(c, doc_title)
+            y_position = height - 100
+
+    c.showPage()
+    c.save()
+
+    return pdf_filename
+
+def save_and_print_selected_booking():
+    selected_item = treeview_bookings.selection()
+
+    if not selected_item:
+        messagebox.showwarning("No Selection", "Please select a booking to save and print.")
+        return
+
+    selected_booking = treeview_bookings.item(selected_item)["values"]
+
+    pdf_filename = save_selected_as_pdf(selected_booking)
+
+    if pdf_filename:
+        if os.name == 'posix':  # For Linux/macOS
+            os.system(f'lpr {pdf_filename}')
+        elif os.name == 'nt':  # For Windows
+            os.startfile(pdf_filename, "print")
+
+        messagebox.showinfo("PDF Saved",f"Selected booking details saved as {pdf_filename}.")
+
+
+def display_booking_details():
+    bookings = show_booking_details()
+
+    for booking in bookings:
+        treeview_bookings.insert("", "end", values=(
+            booking[0], booking[1], booking[2], booking[3], booking[4], booking[5], booking[6], booking[7], booking[8]
+        ))
+
+# GUI for displaying booking information
+def booking_info_page():
+    window = Tk()
+    window.geometry("1221x773")
+    window.configure(bg="#FFFFFF")
+
+    canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
+    canvas.place(x=0, y=0)
+
+    image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+    canvas.create_image(610.0, 386.0, image=image_image_1)
+    canvas.create_text(600, 40, anchor="center", text="PRINT RECEIPT", fill="#000000",font=("Times New Roman ExtraBold", 30))
+
+    global treeview_bookings
+    treeview_bookings = ttk.Treeview(window, columns=("ID", "Reg. No.", "Make & Model", "Customer Name",
+                                                      "Contact No.", "Start Date", "End Date",
+                                                      "Total Price", "Status"), show="headings")
+
+    headers = ["ID", "Reg. No.", "Make & Model", "Customer Name", "Contact No.", "Start Date", "End Date",
+               "Total Price", "Status"]
+
+    # Define headings and center alignment
+    for header in headers:
+        treeview_bookings.heading(header, text=header)
+        treeview_bookings.column(header, anchor="center", width=100)
+
+    treeview_bookings.place(x=0,y=100,width=1200,height=500)
+    scrollbar_y = ttk.Scrollbar(window, orient="vertical", command=treeview_bookings.yview)
+    scrollbar_y.place(x=1200, y=100, width=20, height=500)
+    treeview_bookings.configure(xscrollcommand=scrollbar_y.set)
+
+    # Combined Save and Print button
+    button_save = Button(window, text="Save as PDF", command=save_and_print_selected_booking,bg="blue", fg="white",font=("Times New Roman ExtraBold", 18))
+    button_save.place(x=550,y=650)
+
+    display_booking_details()
+    window.mainloop()
+
+booking_info_page()
+window = Tk()
+
+
