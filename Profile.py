@@ -4,11 +4,11 @@
 
 
 from pathlib import Path
-
+import sqlite3
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-import subprocess
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,messagebox
+import subprocess,sys
 
 
 OUTPUT_PATH = Path(__file__).parent
@@ -18,32 +18,62 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def book_now_button(window):
-    window.destroy()
+def connect_db():
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    return conn
 
-def view_booking_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\view_booking.py"])
+def get_user_id(user_id):
+    conn = connect_db()
+    cursor = conn.cursor()
 
-def notifications_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\notification.py"])
+    try:
+        cursor.execute("SELECT id, username, email FROM Users_details WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
 
-def history_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\history.py"])
+        if user:
+            user_details = {
+                "id": user[0],
+                "username": user[1],
+                "email": user[2],
+            }
+            return user_details
+        else:
+            print(f"No user found with ID {user_id}.")
+            return None
+    finally:
+        conn.close()
 
-def log_out_button(window):
+
+def show_user_details(user_id):
+    user = get_user_id(user_id)
+    if user:
+        print(f"User Details: {user}")  # Replace 'Users_details' with 'user'
+    else:
+        print("User not found.")
+
+def view_booking_button(user_id):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\view_booking.py",str(user_id)])
+
+def notifications_button(user_id):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\notification.py",user_id])
+
+def history_button(user_id):
+    window.withdraw()
+    subprocess.Popen(["python",'history.py',str(user_id)])
+
+def log_out_button():
     window.destroy()
     subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
 
-def promo_button(window):
+def promo_button(user_id):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
-def cars_button(window):
+def cars_button(user_id):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
 
 window = Tk()
 
@@ -92,31 +122,16 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=lambda:print("button 1 clicked"),
     relief="flat"
 )
 button_1.place(
-    x=1119.0,
+    x=1126.0,
     y=56.0,
     width=58.0,
     height=58.0
 )
 
-button_image_2 = PhotoImage(
-    file=relative_to_assets("button_2.png"))
-button_2 = Button(
-    image=button_image_2,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: book_now_button(window),
-    relief="flat"
-)
-button_2.place(
-    x=948.0,
-    y=61.0,
-    width=145.0,
-    height=47.0
-)
 
 button_image_3 = PhotoImage(
     file=relative_to_assets("button_3.png"))
@@ -124,7 +139,7 @@ button_3 = Button(
     image=button_image_3,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: view_booking_button(window),
+    command=lambda: view_booking_button(user_id),
     relief="flat"
 )
 button_3.place(
@@ -140,7 +155,7 @@ button_4 = Button(
     image=button_image_4,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: notifications_button(window),
+    command=lambda: notifications_button(user_id),
     relief="flat"
 )
 button_4.place(
@@ -156,7 +171,7 @@ button_5 = Button(
     image=button_image_5,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: history_button(window),
+    command=lambda: history_button(user_id),
     relief="flat"
 )
 button_5.place(
@@ -172,7 +187,7 @@ button_6 = Button(
     image=button_image_6,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: log_out_button(window),
+    command=lambda: log_out_button(),
     relief="flat"
 )
 button_6.place(
@@ -188,14 +203,14 @@ button_8 = Button(
     image=button_image_8,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: promo_button(window),
+    command=lambda: promo_button(user_id),
     relief="flat"
 )
 button_8.place(
-    x=815.0,
+    x=1010.0,
     y=58.0,
-    width=107.0,
-    height=62.0
+    width=90.0,
+    height=52.0
 )
 
 button_image_9 = PhotoImage(
@@ -204,14 +219,20 @@ button_9 = Button(
     image=button_image_9,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda:cars_button(window),
+    command=lambda:cars_button(user_id),
     relief="flat"
 )
 button_9.place(
-    x=732.0,
+    x=917.0,
     y=58.0,
-    width=83.0,
-    height=62.0
+    width=70.0,
+    height=52.0
 )
+if len(sys.argv) < 2:
+    messagebox.showerror("Error", "User ID not provided.")
+    sys.exit(1)
+
+user_id = int(sys.argv[1])
+show_user_details(user_id)
 window.resizable(False, False)
 window.mainloop()
