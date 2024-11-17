@@ -15,22 +15,22 @@ def relative_to_assets(path: str) -> Path:
 def connect_db():
     return sqlite3.connect('Car_Rental.db')
 
-def promo_button():
+def promo_button(user_id):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
-def cars_button():
+def cars_button(user_id):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
 
-def profile_page():
+def profile_page(user_id):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
-def show_car_details(car_id):
+def show_car_details(car_id,user_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE id = ?", (car_id,))
+    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE id = ?", (car_id,user_id))
     car_details = cursor.fetchone()
     conn.close()
 
@@ -59,17 +59,6 @@ def display_car_details(car_details):
     canvas.create_text(800, 180, anchor="nw", text=f"Seating Capacity: {seating_capacity}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
     canvas.create_text(800, 220, anchor="nw", text=f"Car Type: {car_type}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
     canvas.create_text(800, 260, anchor="nw", text=f"Transmission: {transmission_type}", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
-
-def get_selected_car_id():
-    if len(sys.argv) > 1:
-        return int(sys.argv[1])  # Assuming car_id is passed as the first argument
-    else:
-        messagebox.showerror("Error", "No car ID provided!")
-        return None
-
-car_id = get_selected_car_id()
-if car_id:
-    show_car_details(car_id)
 
 # Set appearance for customtkinter
 ctk.set_appearance_mode("light")
@@ -129,18 +118,18 @@ image_1 = canvas.create_image(86.0,57.0,image=image_image_1)
 
 button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
 button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0,
-                      command=lambda: print("button_1 clicked"), relief="flat")
+                      command=lambda: promo_button(user_id), relief="flat")
 button_1.place(x=1126.0, y=31.0, width=49.0, height=49.0)
 
 button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
 button_2 = Button(image=button_image_2, borderwidth=0, highlightthickness=0,
-                      command=lambda: print("button_2 clicked"), relief="flat")
-button_2.place(x=854.0, y=24.0, width=90.0, height=52.0)
+                      command=lambda: promo_button(user_id), relief="flat")
+button_2.place(x=1010.0, y=24.0, width=90.0, height=52.0)
 
 button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
 button_3 = Button(image=button_image_3, borderwidth=0, highlightthickness=0,
-                      command=lambda: print("button_3 clicked"), relief="flat")
-button_3.place(x=784.0, y=24.0, width=70.0, height=52.0)
+                      command=lambda: cars_button(user_id), relief="flat")
+button_3.place(x=917.0, y=24.0, width=70.0, height=52.0)
 
 canvas.create_text(56.0, 168.0, anchor="nw", text="Rating and Reviews", fill="#000000", font=("KaiseiDecol Medium", 40 * -1))
 canvas.create_text(56.0, 250.0, anchor="nw", text="Customer Name:", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
@@ -170,6 +159,13 @@ for i in range(1, 6):
     # Submit review button
 submit_button = ctk.CTkButton(window, text="Submit Review", command=submit_review)
 submit_button.place(x=56,y=650)
+
+if len(sys.argv) < 2:
+    messagebox.showerror("Error", "User ID not provided.")
+    sys.exit(1)
+
+user_id = int(sys.argv[1])
+show_car_details(car_id,user_id)
 # Start the Tkinter main loop
 window.resizable(False, False)
 window.mainloop()
