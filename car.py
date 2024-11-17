@@ -13,34 +13,34 @@ from PIL import Image, ImageTk
 import subprocess, sys
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame1")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame1")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def promo_button():
+def promo_button(user_id):
     window.destroy()
-    subprocess.Popen([sys.executable,r"C:\car rental booking system\Car-Booking\promo.py"])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
-def profile_button():
+def profile_button(user_id):
     window.destroy()
-    subprocess.Popen([sys.executable, r"C:\car rental booking system\Car-Booking\Profile.py"])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def connect_db():
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     return conn
 
 def open_booking_page(car_id, user_id):
     window.withdraw()
     # Pass car_id as an argument
-    subprocess.Popen([sys.executable, r"C:\car rental booking system\Car-Booking\booking_form.py", str(car_id), str(user_id)])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\booking.py", str(car_id), str(user_id)])
 
 # Modified search_cars to display directly on canvas
 def search_cars(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = "SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE 1=1 AND id NOT IN (SELECT car_id FROM bookings) "
+    query = "SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1 AND id NOT IN (SELECT car_id FROM bookings) "
     parameters = []
 
     car_model = car_model_entry.get().lower()
@@ -123,7 +123,7 @@ def load_all_cars(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars WHERE id NOT IN (SELECT car_id FROM bookings)")
+    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars_details WHERE id NOT IN (SELECT car_id FROM bookings)")
     car_data = cursor.fetchall()
     conn.close()
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: profile_button(),
+        command=lambda: profile_button(user_id),
         relief="flat"
     )
     button_1.place(
@@ -181,33 +181,17 @@ if __name__ == "__main__":
         height=49.0
     )
 
-    button_image_2 = PhotoImage(
-        file=relative_to_assets("button_2.png"))
-    button_2 = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
-        relief="flat"
-    )
-    button_2.place(
-        x=969.0,
-        y=36.0,
-        width=132.0,
-        height=40.0
-    )
-
     button_image_4 = PhotoImage(
         file=relative_to_assets("button_4.png"))
     button_4 = Button(
         image=button_image_4,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: promo_button(),
+        command=lambda: promo_button(user_id),
         relief="flat"
     )
     button_4.place(
-        x=854.0,
+        x=1010.0,
         y=30.0,
         width=90.0,
         height=52.0
@@ -223,7 +207,7 @@ if __name__ == "__main__":
         relief="flat"
     )
     button_5.place(
-        x=784.0,
+        x=917.0,
         y=30.0,
         width=70.0,
         height=52.0
