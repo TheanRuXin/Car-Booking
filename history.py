@@ -7,193 +7,188 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, messagebox,Entry, Text, Button, PhotoImage,ttk,Label,Toplevel
+from PIL import Image, ImageTk
 import subprocess,sys
 
-
+import sqlite3,os
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame8")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame5")
 
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def view_booking_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\view_booking.py"])
+def create_history_table():
+    try:
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute(''' 
+            CREATE TABLE IF NOT EXISTS History (
+                history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                car_id INTEGER,
+                user_id INTEGER,
+                customer_name TEXT,
+                email TEXT,
+                contact_number TEXT,     
+                date_of_birth TEXT,    
+                rental_start_date TEXT,    
+                rental_end_date TEXT,
+                promotion TEXT,
+                total_price REAL,
+                status TEXT DEFAULT 'Pending',
+                FOREIGN KEY(car_id) REFERENCES cars_details(id),
+                FOREIGN KEY(user_id) REFERENCES Users_details(id)
+            )
+        ''')
+        conn.commit()
+        print("History table created successfully.")
+    except sqlite3.Error as e:
+        print("Error creating History table:", e)
+    finally:
+        conn.close()
 
-def notifications_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\notification.py"])
+create_history_table()
 
-def history_button(window):
-    window.withdraw()
-    subprocess.Popen(["python",'history.py'])
+def connect_db():
+    return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
 
-def log_out_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
+def show_history_details(user_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute(''' 
+        SELECT c.registration_number, c.make_and_model,
+               h.rental_start_date, h.rental_end_date, h.total_price,
+               COALESCE(julianday(h.rental_end_date) - julianday(h.rental_start_date), 0) AS days
+        FROM History h
+        JOIN cars_details c ON h.car_id = c.id
+        WHERE h.user_id = ?
+    ''',(user_id,))
+    rows = cursor.fetchall()
+    conn.close()
 
-def promo_button(window):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+    for item in treeview_history.get_children():
+        treeview_history.delete(item)
 
-def cars_button(window):
+    for row in rows:
+        treeview_history.insert("", "end", values=row)
+
+def display_selected_image(event):
+    selected_item = treeview_history.selection()
+    if selected_item:
+        item = treeview_history.item(selected_item)
+        car_id = item['values'][0]
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT C.image_path FROM cars_details C JOIN History h ON H.car_id = C.id WHERE H.user_id =? ",(user_id,))
+        image_path = cursor.fetchone()
+
+        if image_path and image_path[0]:
+            image_file = image_path[0]
+            if os.path.exists(image_file):
+                try:
+                    img = Image.open(image_file)
+                    img = img.resize((300, 300), Image.Resampling.LANCZOS)
+                    img = ImageTk.PhotoImage(img)
+
+                    # Display the image
+                    label_image.config(image=img)
+                    label_image.image = img
+                except Exception as e:
+                    print(f"Error loading image: {e}")
+                    label_image.config(image='')
+            else:
+                print("Image file does not exist.")
+                label_image.config(image='')
+        else:
+            print("No image path found in database.")
+            label_image.config(image='')
+
+        selected_car_info = (car_id, image_path[0])
+        window.selected_car_info = selected_car_info
+
+def open_rating_window(user_id):
+    # Get the selected car info stored earlier
+    if hasattr(window, 'selected_car_info'):
+        car_id, image_path = window.selected_car_info
+
+        # Open the rating page, passing car_id and image_path as arguments
+        subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\build\rating.py", str(car_id), str(user_id),image_path])
+    else:
+        messagebox.showwarning("Selection Error", "Please select a car from the history first.")
+
+def promo_button(user_id):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
+
+def cars_button(user_id):
+    window.destroy()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
+
+def profile_button(user_id):
+    window.destroy()
+    subprocess.Popen(["python", "Profile.py",str(user_id)])
 
 window = Tk()
-
 window.geometry("1221x773")
 window.configure(bg = "#FFFFFF")
-
-
-canvas = Canvas(
-    window,
-    bg = "#FFFFFF",
-    height = 773,
-    width = 1221,
-    bd = 0,
-    highlightthickness = 0,
-    relief = "ridge"
-)
-
+canvas = Canvas(window,bg = "#FFFFFF",height = 773,width = 1221,bd = 0,highlightthickness = 0,relief = "ridge")
 canvas.place(x = 0, y = 0)
-canvas.create_rectangle(
-    0.0,
-    1.0,
-    1220.0,
-    166.0,
-    fill="#DFDFDF",
-    outline="")
+canvas.create_rectangle(0.0,0.0,1221.0,113.0,fill="#DFDFDF",outline="")
 
-canvas.create_rectangle(
-    0.0,
-    1.0,
-    1220.0,
-    166.0,
-    fill="#DFDFDF",
-    outline="")
+treeview_history = ttk.Treeview(window, columns=("Reg. No.", "Make & Model",
+                                                  "Start Date", "End Date", "Total Price",
+                                                  "No. of Days"), show="headings")
 
-image_image_1 = PhotoImage(
-    file=relative_to_assets("image_1.png"))
-image_1 = canvas.create_image(
-    86.0,
-    78.0,
-    image=image_image_1
-)
+# Define headings for the Treeview
+treeview_history.heading("Reg. No.", text="Reg. No.")
+treeview_history.heading("Make & Model", text="Make & Model")
+treeview_history.heading("Start Date", text="Start Date")
+treeview_history.heading("End Date", text="End Date")
+treeview_history.heading("Total Price", text="Total Price (RM)")
+treeview_history.heading("No. of Days", text="No. of Days")
+# Define column widths and alignment
+treeview_history.column("Reg. No.", width=80, anchor="center")
+treeview_history.column("Make & Model", width=130, anchor="center")
+treeview_history.column("Start Date", width=90, anchor="center")
+treeview_history.column("End Date", width=90, anchor="center")
+treeview_history.column("Total Price", width=100, anchor="center")
+treeview_history.column("No. of Days", width=90, anchor="center")
 
-button_image_1 = PhotoImage(
-    file=relative_to_assets("button_1.png"))
-button_1 = Button(
-    image=button_image_1,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
-    relief="flat"
-)
-button_1.place(
-    x=1119.0,
-    y=56.0,
-    width=58.0,
-    height=58.0
-)
+# Pack Treeview
+treeview_history.place(x=25, y=280, width=850, height=300)
 
+treeview_history.bind("<<TreeviewSelect>>", display_selected_image)
 
-button_image_3 = PhotoImage(
-    file=relative_to_assets("button_3.png"))
-button_3 = Button(
-    image=button_image_3,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: view_booking_button(window),
-    relief="flat"
-)
-button_3.place(
-    x=124.0,
-    y=250.0,
-    width=972.2060546875,
-    height=71.55624389648438
-)
+image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+image_1 = canvas.create_image(86.0,57.0,image=image_image_1)
 
-button_image_4 = PhotoImage(
-    file=relative_to_assets("button_4.png"))
-button_4 = Button(
-    image=button_image_4,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: notifications_button(window),
-    relief="flat"
-)
-button_4.place(
-    x=124.0,
-    y=405.0,
-    width=972.2060546875,
-    height=71.55624389648438
-)
+button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
+button_1 = Button(image=button_image_1,borderwidth=0,highlightthickness=0,command=lambda:profile_button(user_id),relief="flat")
+button_1.place(x=1126.0,y=31.0,width=49.0,height=49.0)
 
-button_image_5 = PhotoImage(
-    file=relative_to_assets("button_5.png"))
-button_5 = Button(
-    image=button_image_5,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: history_button(window),
-    relief="flat"
-)
-button_5.place(
-    x=124.0,
-    y=554.07568359375,
-    width=972.2060546875,
-    height=71.55624389648438
-)
+button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
+button_4 = Button(image=button_image_4,borderwidth=0,highlightthickness=0,command=lambda:promo_button(user_id),relief="flat")
+button_4.place(x=1010.0,y=24.0,width=90.0,height=52.0)
 
-button_image_6 = PhotoImage(
-    file=relative_to_assets("button_6.png"))
-button_6 = Button(
-    image=button_image_6,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: log_out_button(window),
-    relief="flat"
-)
-button_6.place(
-    x=547.0,
-    y=681.0,
-    width=128.0,
-    height=67.0
-)
+button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
+button_5 = Button(image=button_image_5,borderwidth=0,highlightthickness=0,command=lambda: cars_button(user_id),relief="flat")
+button_5.place(x=917.0,y=24.0,width=70.0,height=52.0)
 
-button_image_8 = PhotoImage(
-    file=relative_to_assets("button_8.png"))
-button_8 = Button(
-    image=button_image_8,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: promo_button(window),
-    relief="flat"
-)
-button_8.place(
-    x=815.0,
-    y=58.0,
-    width=107.0,
-    height=62.0
-)
+canvas.create_text(56.0,168.0,anchor="nw",text="History",fill="#000000",font=("KaiseiDecol Medium", 40 * -1))
 
-button_image_9 = PhotoImage(
-    file=relative_to_assets("button_9.png"))
-button_9 = Button(
-    image=button_image_9,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda:cars_button(window),
-    relief="flat"
-)
-button_9.place(
-    x=732.0,
-    y=58.0,
-    width=83.0,
-    height=62.0
-)
+label_image = Label(window)
+label_image.place(x=900, y=280, width=300, height=300)
+
+button_rating = Button(window, text="Rating", command=lambda:open_rating_window(user_id), bg="red", fg="yellow",font=("KaiseiDecol Medium", 16 * -1))
+button_rating.place(x=25,y=600,width=150,height=50)
+
+if len(sys.argv) < 2:
+    messagebox.showerror("Error", "User ID not provided.")
+    sys.exit(1)
+
+user_id = int(sys.argv[1])
+show_history_details(user_id)
 window.resizable(False, False)
 window.mainloop()
