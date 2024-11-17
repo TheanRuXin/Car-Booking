@@ -9,7 +9,7 @@ from pathlib import Path
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Toplevel,Text, Button, PhotoImage,ttk, messagebox,Label
 import subprocess
-import sqlite3,os
+import sqlite3,os,sys
 from PIL import Image, ImageTk
 
 OUTPUT_PATH = Path(__file__).parent
@@ -19,23 +19,23 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\asse
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-current_user_id = 123  # Example user ID from the login system
 # Connect to the database
 def connect_db():
     conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     return conn
 
-def show_booking_details():
+def show_booking_details(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT c.id,b.customer_name,c.registration_number, c.make_and_model,
+        SELECT b.customer_name,c.registration_number, c.make_and_model,
                b.rental_start_date, b.rental_end_date, b.total_price,
-               COALESCE(julianday(b.rental_end_date) - julianday(b.rental_start_date), 0) AS days, b.status,c.image_path
+               COALESCE(julianday(b.rental_end_date) - julianday(b.rental_start_date), 0) AS days, b.status
         FROM bookings b
         JOIN cars_details c ON b.car_id = c.id
-    ''')
+        WHERE b.user_id =?
+    ''',(user_id,))
 
     rows = cursor.fetchall()
     conn.close()
@@ -59,7 +59,7 @@ def on_treeview_select(event):
         else:
             clear_button.config(state="normal")
 
-def clear_booking():
+def clear_booking(user_id):
     selected_item = treeview_bookings.selection()
     if selected_item:
         item = treeview_bookings.item(selected_item)
@@ -75,12 +75,12 @@ def clear_booking():
             conn.close()
 
             # Refresh the booking details after deletion
-            show_booking_details()
+            show_booking_details(user_id)
             messagebox.showinfo("Success", "Booking cleared successfully!")
     else:
         messagebox.showwarning("Selection Error", "Please select a booking to clear.")
 
-def clear_all_bookings():
+def clear_all_bookings(user_id):
     if messagebox.askyesno("Clear All Bookings","Are you sure you want to clear all booking history? This action cannot be undone."):
         conn = connect_db()
         cursor = conn.cursor()
@@ -88,18 +88,18 @@ def clear_all_bookings():
         conn.commit()
         conn.close()
 
-        show_booking_details()
+        show_booking_details(user_id)
         messagebox.showinfo("Success","All booking history cleared successfully!")
 
 def display_selected_image(event):
     selected_item = treeview_bookings.selection()
     if selected_item:
         item = treeview_bookings.item(selected_item)
-        car_id = item['values'][0]
+        car_id = item['values'][1]
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT image_path FROM cars_details WHERE id = ?", (car_id,))
+        cursor.execute("SELECT C.image_path FROM cars_details C JOIN bookings B ON B.car_id = C.id WHERE B.user_id =? ",(user_id,))
         image_path = cursor.fetchone()
 
         if image_path and image_path[0]:
@@ -124,21 +124,21 @@ def display_selected_image(event):
             label_image.config(image='')
 
         conn.close()
-def go_back():
+def go_back(user_id):
     window.destroy()  # Close the current window
-    subprocess.Popen(["python", "profile.py"])  # Open the customer panel
+    subprocess.Popen(["python", "profile.py",str(user_id)])  # Open the customer panel
 
-def promo_button():
+def promo_button(user_id):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
-def cars_button():
+def cars_button(user_id):
     window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py"])
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
 
-def profile_page():
+def profile_page(user_id):
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py"])
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 
 window = Tk()
@@ -164,8 +164,8 @@ treeview_bookings.heading("No. of Days", text="No. of Days")
 treeview_bookings.heading("Status", text="Status")
 
 treeview_bookings.column("Customer Name", width=80, anchor="center")
-treeview_bookings.column("Reg. No.", width=40, anchor="center")
-treeview_bookings.column("Make & Model", width=130, anchor="center")
+treeview_bookings.column("Reg. No.", width=60, anchor="center")
+treeview_bookings.column("Make & Model", width=110, anchor="center")
 treeview_bookings.column("Start Date", width=90, anchor="center")
 treeview_bookings.column("End Date", width=90, anchor="center")
 treeview_bookings.column("Total Price", width=100, anchor="center")
@@ -175,32 +175,37 @@ treeview_bookings.column("Status", width=90, anchor="center")
 treeview_bookings.place(x=25, y=280, width=850, height=300)
 treeview_bookings.bind("<<TreeviewSelect>>", display_selected_image)
 
-Button(window, text="Refresh Bookings", command=lambda: show_booking_details(), bg="red", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=25, y=600, width=150, height=50)
+Button(window, text="Refresh Bookings", command=lambda: show_booking_details(user_id), bg="red", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=25, y=600, width=150, height=50)
 
-Button(window, text="Clear Booking", command=clear_booking, bg="orange", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=220, y=600, width=150, height=50)
+Button(window, text="Clear Booking", command=lambda:clear_booking(user_id), bg="orange", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=220, y=600, width=150, height=50)
 
-Button(window, text="Back", command=lambda: go_back(), bg="yellow", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=425, y=600, width=50, height=50)
+Button(window, text="Back", command=lambda: go_back(user_id), bg="yellow", fg="black",font=("KaiseiDecol Medium", 16 * -1)).place(x=425, y=600, width=50, height=50)
 
 image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
 canvas.create_image(86.0, 57.0, image=image_image_1)
 
 button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=lambda: profile_page(),relief="flat")
+button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=lambda: profile_page(user_id),relief="flat")
 button_1.place(x=1126.0, y=31.0, width=49.0, height=49.0)
 
 button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
-button_4 = Button(image=button_image_4, borderwidth=0, highlightthickness=0, command=lambda: promo_button(),relief="flat")
-button_4.place(x=854.0, y=30.0, width=90.0, height=52.0)
+button_4 = Button(image=button_image_4, borderwidth=0, highlightthickness=0, command=lambda: promo_button(user_id),relief="flat")
+button_4.place(x=1010.0, y=30.0, width=90.0, height=52.0)
 
 button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
-button_5 = Button(image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: cars_button(),relief="flat")
-button_5.place(x=784.0, y=30.0, width=70.0, height=52.0)
+button_5 = Button(image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: cars_button(user_id),relief="flat")
+button_5.place(x=917.0, y=30.0, width=70.0, height=52.0)
 
 canvas.create_text(56.0, 168.0, anchor="nw", text="View Booking", fill="#000000",font=("KaiseiDecol Medium", 40 * -1))
 
 label_image = Label(window)
 label_image.place(x=900, y=280, width=300, height=300)
 
-show_booking_details()
+if len(sys.argv) < 2:
+    messagebox.showerror("Error", "User ID not provided.")
+    sys.exit(1)
+
+user_id = int(sys.argv[1])
+show_booking_details(user_id)
 window.mainloop()
 
