@@ -6,7 +6,7 @@
 from pathlib import Path
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame7")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame7")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -21,7 +21,7 @@ import subprocess, sys
 
 # Fuction to Log In a user
 def user_login():
-    conn = sqlite3.connect('Users.db')
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     c = conn.cursor()
 
     email = entry_1.get().strip()
@@ -42,11 +42,11 @@ def user_login():
             user_id = user[0]  # Extract user_id
             messagebox.showinfo("Success", "Log in successful!")
             window.withdraw()
-            subprocess.Popen([sys.executable, r"C:\car rental booking system\Car-Booking\car.py", str(user_id)])
+            subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\car.py", str(user_id)])
         else:
             messagebox.showerror("Error", "Invalid email or password!")
             window.withdraw()
-            subprocess.Popen(["python", r"C:\car rental booking system\Car-Booking\first_page.py"])
+            subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
     except sqlite3.Error as e:
         messagebox.showerror("Database Error", f"An error occurred: {e}")
     finally:
