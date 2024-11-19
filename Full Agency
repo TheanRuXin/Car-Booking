@@ -1,0 +1,1302 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas as pdf_canvas
+import matplotlib.pyplot as plt
+import customtkinter as ctk
+from tkcalendar import DateEntry
+from datetime import datetime, date
+from PIL import Image, ImageTk
+from tkinter.ttk import Treeview
+from pathlib import Path
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,Label, Entry, filedialog, messagebox,ttk,StringVar,OptionMenu,ttk, Toplevel
+import subprocess,sqlite3, os ,smtplib
+import textwrap
+from email.mime.text import MIMEText
+
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\agency_panel\build\assets\frame0")
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+def manage_cars():
+    global window
+    window.destroy()
+    output_path = Path(__file__).parent
+    assets_path = output_path / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+    def relative_to_assets(path: str) -> Path:
+        return assets_path / Path(path)
+
+    def connect_db():
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute(''' 
+            CREATE TABLE IF NOT EXISTS cars_details (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                registration_number TEXT,
+                make_and_model TEXT,
+                seating_capacity TEXT,
+                daily_rate REAL,
+                fuel_type TEXT,
+                image_path TEXT,
+                manufacturer_year TEXT, 
+                transmission_type TEXT, 
+                car_type TEXT, 
+                mileage TEXT,
+                color TEXT
+            )
+        ''')
+        conn.commit()
+        return conn
+
+    # Function to save data to the database
+    def save_data():
+        registration_number = entry_registration.get()
+        make_and_model = entry_make_and_model.get()
+        seating_capacity = seating_var.get()
+        daily_rate = entry_rate.get()
+        fuel_type = fuel_type_var.get()
+        manufacturer_year = entry_year.get()
+        transmission_type = transmission_var.get()
+        car_type = car_type_var.get()
+        mileage = entry_mileage.get()
+        color = color_var.get()
+
+        if not registration_number or not make_and_model or not seating_capacity or not daily_rate or not fuel_type or not manufacturer_year or not transmission_type or not car_type or not mileage or not color:
+            messagebox.showerror("Error", "Please fill in all fields.")  # Show error if any field is empty
+            return
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute(''' 
+            INSERT INTO cars_details (registration_number, make_and_model, seating_capacity, daily_rate, fuel_type, manufacturer_year, transmission_type, car_type, mileage, color,image_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (registration_number, make_and_model, seating_capacity, daily_rate, fuel_type, manufacturer_year,
+              transmission_type, car_type, mileage, color, image_path))
+        conn.commit()  # to make sure data save successfully in database.
+        conn.close()
+        messagebox.showinfo("Success", "Data saved successfully!")
+        refresh_treeview()
+
+    def refresh_treeview():
+        for row in treeview.get_children():
+            treeview.delete(row)
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id, registration_number, make_and_model, seating_capacity, daily_rate, fuel_type, manufacturer_year, transmission_type, car_type, mileage, color FROM cars_details')
+        rows = cursor.fetchall()
+        conn.close()
+
+        for row in rows:
+            treeview.insert("", "end", values=row)
+
+    # Function to upload an image
+    def browse_image():
+        global image_path
+        image_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
+        if image_path:
+            upload_image()
+
+    # Function to upload and display the image
+    def upload_image():
+        img = Image.open(image_path)
+        img = img.resize((300, 300), Image.LANCZOS)  # Resize the image to 150x150
+        img = ImageTk.PhotoImage(img)
+        image_display.config(image=img)
+        image_display.image = img
+
+    # Function to delete a car from the database
+    def delete_data():
+        global selected_car_id
+        if selected_car_id is not None:
+            confirm = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this car?")
+            if confirm:
+                conn = connect_db()
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM cars_details WHERE id = ?', (selected_car_id,))
+                conn.commit()
+                conn.close()
+                messagebox.showinfo("Success", "Car deleted successfully!")
+                refresh_treeview()
+                clear_selection()
+        else:
+            messagebox.showwarning("Warning", "Please select a car to delete.")
+
+    # Function to update a car's details
+    def update_data():
+        global selected_car_id
+        if selected_car_id is not None:
+            registration_number = entry_registration.get()
+            make_and_model = entry_make_and_model.get()
+            seating_capacity = seating_var.get()
+            daily_rate = entry_rate.get()
+            fuel_type = fuel_type_var.get()
+            manufacturer_year = entry_year.get()
+            transmission_type = transmission_var.get()
+            car_type = car_type_var.get()
+            mileage = entry_mileage.get()
+            color = color_var.get()
+
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute(''' 
+                UPDATE cars_details 
+                SET registration_number = ?, make_and_model = ?, seating_capacity = ?, daily_rate = ?, fuel_type = ?, image_path = ?,manufacturer_year = ?, transmission_type = ?, car_type = ?, mileage = ?, color = ?
+                WHERE id = ?
+            ''', (
+            registration_number, make_and_model, seating_capacity, daily_rate, fuel_type, image_path, manufacturer_year,
+            transmission_type, car_type, mileage, color, selected_car_id))
+            conn.commit()
+            conn.close()
+            messagebox.showinfo("Success", "Car updated successfully!")
+            refresh_treeview()
+            clear_selection()
+        else:
+            messagebox.showwarning("Warning", "Please select a car to update.")
+
+    def select_item(event):
+        global selected_car_id, image_path
+        selected_item = treeview.selection()
+        if selected_item:
+            item = treeview.item(selected_item)
+            values = item['values']
+            selected_car_id = values[0]  # Get the ID of the selected car
+
+            # Fetch the selected car details from the database (including image path)
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM cars_details WHERE id = ?', (selected_car_id,))
+            car_data = cursor.fetchone()
+            conn.close()
+
+            # retrieving the car details
+            if car_data:  # if car data not empty
+                entry_registration.delete(0, 'end')  # clear all the data
+                entry_registration.insert(0, car_data[1])
+                entry_make_and_model.delete(0, 'end')
+                entry_make_and_model.insert(0, car_data[2])
+                seating_var.set(car_data[3])  # Set the seating capacity dropdown
+                entry_rate.delete(0, 'end')
+                entry_rate.insert(0, car_data[4])
+                fuel_type_var.set(car_data[5])
+                entry_year.delete(0, 'end')
+                entry_year.insert(0, car_data[7])
+                transmission_var.set(car_data[8])
+                car_type_var.set(car_data[9])
+                entry_mileage.delete(0, 'end')
+                entry_mileage.insert(0, car_data[10])
+                color_var.set(car_data[11])
+
+                # Load and display the image if the image path exists
+                image_path = car_data[6]  # This is the image path stored in the database
+                if image_path:
+                    upload_image()
+
+    def clear_selection():
+        global selected_car_id
+        selected_car_id = None
+        entry_registration.delete(0, 'end')
+        entry_make_and_model.delete(0, 'end')
+        seating_var.set("Select")  # Reset dropdown
+        entry_rate.delete(0, 'end')
+        fuel_type_var.set("Select")
+        entry_year.delete(0, 'end')
+        transmission_var.set("Select")
+        car_type_var.set("Select")
+        entry_mileage.delete(0, 'end')
+        color_var.set("Select")
+        image_display.config(image="")  # Clear image
+
+    def back_to_panel():
+        window.destroy()
+        agency_panel()
+
+    window = Tk()
+
+    window.geometry("1221x773")
+    window.configure(bg="#FFFFFF")
+
+    canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
+    canvas.place(x=0, y=0)
+
+    image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+    image_1 = canvas.create_image(610.0, 386.0, image=image_image_1)
+
+    # Title
+    canvas.create_text(600, 40, anchor="center", text="MANAGE CAR DETAILS", fill="#000000",
+                       font=("Times New Roman ExtraBold", 18))
+
+    # Input fields
+    canvas.create_text(50.0, 410.0, anchor="nw", text="Registration Number:", fill="#000000",
+                       font=("Inter Bold", 14 * -1))
+    entry_registration = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
+    entry_registration.place(x=200.0, y=410.0, width=180.0, height=22.0)
+
+    canvas.create_text(50.0, 466.0, anchor="nw", text="Make & Model:", fill="#000000", font=("Inter Bold", 14 * -1))
+    entry_make_and_model = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
+    entry_make_and_model.place(x=200.0, y=466.0, width=180.0)
+
+    canvas.create_text(50.0, 522.0, anchor="nw", text="Seating Capacity:", fill="#000000", font=("Inter Bold", 14 * -1))
+    seating_var = StringVar(window)
+    seating_var.set("Select")  # Default value
+    seating_options = ["2", "4", "5", "7", "8"]
+    seating_dropdown = OptionMenu(window, seating_var, *seating_options)
+    seating_dropdown.place(x=200.0, y=522.0, width=180.0)
+
+    canvas.create_text(50.0, 578.0, anchor="nw", text="Daily Rate (RM):", fill="#000000", font=("Inter Bold", 14 * -1))
+    entry_rate = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
+    entry_rate.place(x=200.0, y=578.0, width=180.0, height=22.0)
+
+    canvas.create_text(50.0, 643.0, anchor="nw", text="Fuel Type:", fill="#000000", font=("Inter Bold", 14 * -1))
+    fuel_type_var = StringVar(window)
+    fuel_type_var.set("Select")  # Default value
+    fuel_type_options = ["Petrol", "Diesel", "Electric", "Hybrid"]
+    fuel_type_dropdown = OptionMenu(window, fuel_type_var, *fuel_type_options)
+    fuel_type_dropdown.place(x=200.0, y=634.0, width=180.0)
+
+    canvas.create_text(410.0, 410.0, anchor="nw", text="Manufacturer Year:", fill="#000000",
+                       font=("Inter Bold", 14 * -1))
+    entry_year = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
+    entry_year.place(x=550.0, y=410.0, width=180.0, height=22.0)
+
+    canvas.create_text(410.0, 466.0, anchor="nw", text="Transmission Type:", fill="#000000",
+                       font=("Inter Bold", 14 * -1))
+    transmission_var = StringVar(window)
+    transmission_var.set("Select")  # Default value
+    transmission_options = ["Manual", "Automatic"]
+    transmission_dropdown = OptionMenu(window, transmission_var, *transmission_options)
+    transmission_dropdown.place(x=550.0, y=466.0, width=180.0)
+
+    canvas.create_text(410.0, 522.0, anchor="nw", text="Car Type:", fill="#000000", font=("Inter Bold", 14 * -1))
+    car_type_var = StringVar(window)
+    car_type_var.set("Select")  # Default value
+    car_type_options = ["SUV", "Hatchback", "Crossover", "Convertible", "Sedan", "Sparts car", "Coupe", "Minivan",
+                        "Station Wagon", "Pickup Truck", "MPV"]
+    car_type_dropdown = OptionMenu(window, car_type_var, *car_type_options)
+    car_type_dropdown.place(x=550.0, y=522.0, width=180.0)
+
+    canvas.create_text(410.0, 578.0, anchor="nw", text="Mileage:", fill="#000000", font=("Inter Bold", 14 * -1))
+    entry_mileage = Entry(bd=0, bg="#D9D9D9", fg="#000716", highlightthickness=0)
+    entry_mileage.place(x=550.0, y=578.0, width=180.0, height=22.0)
+
+    canvas.create_text(410.0, 634.0, anchor="nw", text="Color:", fill="#000000", font=("Inter Bold", 14 * -1))
+    color_var = StringVar(window)
+    color_var.set("Select")  # Default value
+    color_options = ["White", "Black", "Grey", "Silver", "Blue", "Red", "Teal"]
+    color_dropdown = OptionMenu(window, color_var, *color_options)
+    color_dropdown.place(x=550.0, y=634.0, width=180.0)
+
+    # Browse image button
+    button_browse = Button(
+        text="Browse Image",
+        command=browse_image,
+        bg="#64C4ED",  # Light blue background
+        fg="black"
+    )
+    button_browse.place(x=790.0, y=610.0, width=100.0, height=30.0)
+
+    # Image display area
+    image_display = Label(window)
+    image_display.place(x=900, y=400, width=300, height=300)
+
+    treeview = ttk.Treeview(window, columns=(
+    "ID", "Registration Number", "Make & Model", "Seating Capacity", "Daily Rate", "Fuel Type", "Manufacturer Year",
+    "Transmission Type", "Car Type", "Mileage", "Color"), show="headings")
+
+    treeview.heading("ID", text="ID")
+    treeview.heading("Registration Number", text="Reg. No.")
+    treeview.heading("Make & Model", text="Make & Model")
+    treeview.heading("Seating Capacity", text="Seats")
+    treeview.heading("Daily Rate", text="Rate (RM)")
+    treeview.heading("Fuel Type", text="Fuel Type")
+    treeview.heading("Manufacturer Year", text="Manufacturer Year")
+    treeview.heading("Transmission Type", text="Transmission Type")
+    treeview.heading("Car Type", text="Car Type")
+    treeview.heading("Mileage", text="Mileage")
+    treeview.heading("Color", text="Color")
+
+    treeview.column("ID", width=50, anchor="center")
+    treeview.column("Registration Number", width=100, anchor="center")
+    treeview.column("Make & Model", width=150, anchor="center")
+    treeview.column("Seating Capacity", width=100, anchor="center")
+    treeview.column("Daily Rate", width=100, anchor="center")
+    treeview.column("Fuel Type", width=100, anchor="center")
+    treeview.column("Manufacturer Year", width=100, anchor="center")
+    treeview.column("Transmission Type", width=150, anchor="center")
+    treeview.column("Car Type", width=150, anchor="center")
+    treeview.column("Mileage", width=100, anchor="center")
+    treeview.column("Color", width=100, anchor="center")
+
+    treeview.place(x=25, y=70, width=1175, height=300)
+    treeview.bind("<<TreeviewSelect>>", select_item)
+
+    # Buttons for saving, updating, deleting, and clearing (below the image)
+    button_save = Button(
+        text="Save",
+        command=save_data,
+        bg="green",  # Light blue background
+        fg="#FFFFFF"
+    )
+    button_save.place(x=810, y=410, width=80, height=30)
+
+    button_update = Button(
+        text="Update",
+        command=update_data,
+        bg="#FFA500",  # Orange background for update
+        fg="#FFFFFF"
+    )
+    button_update.place(x=810, y=460, width=80, height=30)
+
+    button_delete = Button(
+        text="Delete",
+        command=delete_data,
+        bg="#D9534F",  # Red background for delete
+        fg="#FFFFFF"
+    )
+    button_delete.place(x=810, y=510, width=80, height=30)
+
+    button_clear = Button(
+        text="Clear",
+        command=clear_selection,
+        bg="#DCDCDC",  # Light gray background for clear
+        fg="#000000"
+    )
+    button_clear.place(x=810, y=560, width=80, height=30)
+
+    button_back = Button(
+        text="Back to Panel",
+        command=lambda: back_to_panel(),
+        bg="#F6139F",
+        fg="#000000"
+    )
+    button_back.place(x=790, y=660, width=100, height=30)
+    refresh_treeview()
+    window.mainloop()
+
+def manage_bookings():
+    global window
+    window.destroy()
+    output_path = Path(__file__).parent
+    assets_path = output_path / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+    def relative_to_assets(path: str) -> Path:
+        return assets_path / Path(path)
+
+    # Connect to the database
+    def connect_db():
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        return conn
+
+    def validate_date(date_text):
+        try:
+            return datetime.strptime(date_text, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+
+    # Function to fetch and display booking details based on date range
+    def show_booking_details(start_date=None, end_date=None, status=None):
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        query = '''
+            SELECT b.booking_id, c.registration_number, c.make_and_model, b.customer_name, b.contact_number, 
+                   b.rental_start_date, b.rental_end_date, b.total_price, 
+                   COALESCE(julianday(b.rental_end_date) - julianday(b.rental_start_date), 0) AS days, b.status,c.image_path
+            FROM bookings b
+            JOIN cars_details c ON b.car_id = c.id
+        '''
+
+        # Search by date range
+        conditions = []
+        params = []
+
+        if start_date and end_date:
+            conditions.append('DATE(b.rental_start_date) >= DATE(?) AND DATE(b.rental_end_date) <= DATE(?)')
+            params.extend([start_date, end_date])
+        elif start_date:  # Start date only
+            conditions.append('DATE(b.rental_start_date) >= DATE(?)')
+            params.append(start_date)
+        elif end_date:  # End date only
+            conditions.append('DATE(b.rental_end_date) <= DATE(?)')
+            params.append(end_date)
+
+        if status:
+            conditions.append('b.status LIKE ?')
+            params.append(status)
+
+        if conditions:
+            query += ' WHERE ' + ' AND '.join(conditions)
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        conn.close()
+
+        # Clear previous entries in the Treeview
+        for item in treeview_bookings.get_children():
+            treeview_bookings.delete(item)
+
+        # Insert the fetched rows into the Treeview
+        for row in rows:
+            formatted_row = (
+                row[0],  # ID
+                row[1],  # Reg. No.
+                row[2],  # Make & Model
+                row[3],  # Customer Name
+                row[4],  # Contact No.
+                row[5],  # Start Date
+                row[6],  # End Date
+                row[7],  # Total Price
+                row[8],  # No. of Days
+                row[9]  # Status
+            )
+            treeview_bookings.insert("", "end", values=formatted_row)
+
+    def search_bookings():
+        start_date_input = entry_start_date.get()
+        end_date_input = entry_end_date.get()
+        status = entry_status.get().strip()
+        start_date = validate_date(start_date_input) if start_date_input else None
+        end_date = validate_date(end_date_input) if end_date_input else None
+
+        if start_date_input and not start_date:
+            messagebox.showerror("Invalid Date",
+                                 f"Start Date '{start_date_input}' is not in the correct format (YYYY-MM-DD).")
+            return
+        if end_date_input and not end_date:
+            messagebox.showerror("Invalid Date",
+                                 f"End Date '{end_date_input}' is not in the correct format (YYYY-MM-DD).")
+            return
+        if not start_date and not end_date and not status:
+            messagebox.showwarning("Input Error", "Please enter at least one filter (date range or status).")
+            return
+            # Pass all filters to show_booking_details
+        show_booking_details(start_date, end_date, status)
+
+    def open_booking_detail_window(booking_id):  # to approve/reject
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT b.booking_id, c.registration_number, c.make_and_model, b.customer_name, b.contact_number,
+                   b.rental_start_date, b.rental_end_date, b.total_price, b.status
+            FROM bookings b
+            JOIN cars_details c ON b.car_id = c.id
+            WHERE b.booking_id = ?
+        ''', (booking_id,))
+
+        booking = cursor.fetchone()
+        conn.close()
+
+        if booking:
+            detail_window = Toplevel()
+            detail_window.title("Booking Details")
+            detail_window.geometry("900x900")
+
+            Label(detail_window, text="Customer Booking Details", font=("Times New Roman", 16, "bold")).pack(pady=20)
+            frame = ttk.Frame(detail_window)
+            frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+            # Left align labels
+            Label(frame, text="Booking ID:", font=("Times New Roman", 14)).grid(row=0, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[0], font=("Arial", 12)).grid(row=0, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Reg. No.:", font=("Times New Roman", 14)).grid(row=1, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[1], font=("Arial", 12)).grid(row=1, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Make & Model:", font=("Times New Roman", 14)).grid(row=2, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[2], font=("Arial", 12)).grid(row=2, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Customer Name:", font=("Times New Roman", 14)).grid(row=3, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[3], font=("Arial", 12)).grid(row=3, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Contact No.:", font=("Times New Roman", 14)).grid(row=4, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[4], font=("Arial", 12)).grid(row=4, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Start Date:", font=("Times New Roman", 14)).grid(row=5, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[5], font=("Arial", 12)).grid(row=5, column=1, sticky="w", pady=5)
+
+            Label(frame, text="End Date:", font=("Times New Roman", 14)).grid(row=6, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[6], font=("Arial", 12)).grid(row=6, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Total Price:", font=("Times New Roman", 14)).grid(row=7, column=0, sticky="w", pady=5)
+            Label(frame, text="RM" + str(booking[7]), font=("Arial", 12)).grid(row=7, column=1, sticky="w", pady=5)
+
+            Label(frame, text="Status:", font=("Times New Roman", 14)).grid(row=8, column=0, sticky="w", pady=5)
+            Label(frame, text=booking[8], font=("Arial", 12)).grid(row=8, column=1, sticky="w", pady=5)
+
+            Button(frame, text="Approve", command=lambda: update_booking_status(booking[0], "Approved", detail_window),
+                   bg="green", fg="black", font=("Arial", 11)).grid(row=9, column=0, pady=10, sticky="ew")
+            Button(frame, text="Reject", command=lambda: update_booking_status(booking[0], "Rejected", detail_window),
+                   bg="red", fg="black", font=("Arial", 11)).grid(row=9, column=1, pady=10, sticky="ew")
+
+    def update_booking_status(booking_id, status, detail_window):
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE bookings SET status = ? WHERE booking_id = ?', (status, booking_id))
+        conn.commit()
+        conn.close()
+
+        cursor.execute("SELECT email FROM bookings WHERE booking_id = ?", (booking_id,))
+        to_email = cursor.fetchone()[0]
+        conn.close()
+
+        send_email(to_email, booking_id, status)
+
+        show_booking_details()
+        detail_window.destroy()  # Close the detail window
+        messagebox.showinfo("Success", f"Booking {status.lower()} successfully!")
+
+    def send_email(to_email, booking_id, status):
+        try:
+            from_email = "ruxinthean@gmail.com"
+            from_password = "diqe nxpk qsmd wsap"
+
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(from_email, from_password)
+
+            subject = f"Car Booking {status.capitalize()}"
+            body = textwrap.dedent(f"""
+            Dear User,
+
+            Your booking (ID: {booking_id}) has been {status}.
+            {'Please proceed to payment.' if status == 'Approved' else 'We regret to inform you that your booking has been rejected.'}
+
+            Regards,
+            Car Rental Team
+            """)
+            msg = MIMEText(body)
+            msg['From'] = from_email
+            msg['To'] = to_email
+            msg['Subject'] = subject
+
+            server.send_message(msg)
+            server.quit()
+
+            messagebox.showinfo("Success", "Email sent successfully.")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+            messagebox.showerror("Error", f"Failed to send email: {e}")
+
+    def go_back():
+        window.destroy()
+        agency_panel()
+
+    def display_selected_image(event):
+        selected_item = treeview_bookings.selection()
+        if selected_item:
+            item = treeview_bookings.item(selected_item)
+            booking_id = item['values'][0]  # Get car ID from the selected row
+
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT c.image_path FROM cars_details c JOIN bookings b ON b.car_id = c.id WHERE b.booking_id = ?",
+                (booking_id,))
+            image_path = cursor.fetchone()
+
+            if image_path and image_path[0]:
+                try:
+                    img = Image.open(image_path[0])
+                    img = img.resize((300, 300), Image.Resampling.LANCZOS)
+                    img = ImageTk.PhotoImage(img)
+
+                    # Display the image
+                    label_image.config(image=img)
+                    label_image.image = img
+                except Exception as e:
+                    print(f"Error loading image: {e}")
+                    label_image.config(image='')
+            else:
+                label_image.config(image='')
+
+    def view_booking_page():
+        global window, treeview_bookings, entry_start_date, entry_status, entry_end_date, label_image
+        window = Tk()
+        window.geometry("1200x600")
+        window.title("Car Rental - Booking Details")
+
+        window.geometry("1221x773")
+        window.title("Car Rental - Booking Details")
+
+        canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
+        canvas.place(x=0, y=0)
+
+        image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+        canvas.create_image(610.0, 386.0, image=image_image_1)
+
+        canvas.create_text(600, 40, anchor="center", text="MANAGE BOOKING DETAILS", fill="#000000",
+                           font=("Times New Roman ExtraBold", 18))
+
+        canvas.create_text(420.0, 80.0, anchor="nw", text="Start Date (YYYY-MM-DD):", fill="#000000",
+                           font=("Inter Bold", 14 * -1))
+        entry_start_date = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
+        entry_start_date.place(x=610.0, y=80.0, width=180.0, height=22.0)
+
+        canvas.create_text(420.0, 130.0, anchor="nw", text="End Date (YYYY-MM-DD):", fill="#000000",
+                           font=("Inter Bold", 14 * -1))
+        entry_end_date = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
+        entry_end_date.place(x=610.0, y=130.0, width=180.0, height=22.0)
+
+        canvas.create_text(420.0, 180.0, anchor="nw", text="Status:", fill="#000000", font=("Inter Bold", 14 * -1))
+        entry_status = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0)
+        entry_status.place(x=610.0, y=180.0, width=180.0, height=22.0)
+
+        button_search = Button(text="Search", command=search_bookings, bg="blue", fg="white", font=("Arial", 11))
+        button_search.place(x=560.0, y=230.0, width=100.0, height=30.0)
+
+        # Define the columns for the Treeview
+        treeview_bookings = ttk.Treeview(window, columns=("ID", "Reg. No.", "Make & Model", "Customer Name",
+                                                          "Contact No.", "Start Date", "End Date", "Total Price",
+                                                          "No. of Days", "Status"), show="headings")
+
+        scrollbar_x = ttk.Scrollbar(window, orient="horizontal", command=treeview_bookings.xview)
+        scrollbar_x.place(x=25, y=580, width=850, height=20)
+        treeview_bookings.configure(xscrollcommand=scrollbar_x.set)
+
+        for col in treeview_bookings["columns"]:
+            treeview_bookings.heading(col, text=col)
+
+        # Define column widths
+        for col in treeview_bookings["columns"]:
+            treeview_bookings.column(col, width=100, anchor="center")
+
+        treeview_bookings.place(x=25, y=280, width=850, height=300)  # add treeview to GUI
+
+        # Bind double-click event to open booking details
+        treeview_bookings.bind("<Double-1>", lambda event: open_booking_detail_window(
+            treeview_bookings.item(treeview_bookings.selection())['values'][0]))
+
+        treeview_bookings.bind("<<TreeviewSelect>>", display_selected_image)
+
+        button_back = Button(text="Back", command=go_back, bg="orange", fg="black", font=("Arial", 11))
+        button_back.place(x=560.0, y=630.0, width=100.0, height=30.0)
+
+        label_image = Label(window)
+        label_image.place(x=900, y=280, width=300, height=300)
+
+        window.mainloop()
+
+    view_booking_page()
+
+def manage_rating():
+    global window
+    window.destroy()
+    output_path = Path(__file__).parent
+    assets_path = output_path / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+    def relative_to_assets(path: str) -> Path:
+        return assets_path / Path(path)
+
+    # Configure appearance for customtkinter
+    ctk.set_appearance_mode("light")
+    ctk.set_default_color_theme("blue")
+
+    # Database setup
+    def create_reviews_table():
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Reviews(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            customer_name TEXT NOT NULL,
+            review TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            car_id INTEGER NOT NULL
+        )
+        ''')
+        conn.commit()
+        conn.close()
+
+    # Fetch reviews from the database based on rating
+    def fetch_reviews_by_rating(selected_rating=None):
+        selected_rating = rating_var_view.get()
+        for row in tree.get_children():
+            tree.delete(row)
+
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT customer_name, review, rating FROM Reviews WHERE rating = ?", (selected_rating,))
+        reviews = cursor.fetchall()
+        conn.close()
+
+        if reviews:
+            for review in reviews:
+                tree.insert("", "end", values=(review[0], review[1], review[2]))
+        else:
+            messagebox.showinfo("No Results", "No reviews for the selected rating.")
+
+    # Generate PDF report for reviews
+    def generate_pdf_report():
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT customer_name, review, rating FROM Reviews")
+        reviews = cursor.fetchall()
+        conn.close()
+        print("Canvas type:", type(canvas))
+
+        if reviews:
+            pdf_file = "reviews_report.pdf"
+            pdf = pdf_canvas.Canvas(pdf_file, pagesize=letter)
+            width, height = letter
+
+            pdf.setFont("Helvetica-Bold", 16)
+            pdf.drawString(100, height - 50, "Car Rental Reviews Report")
+            pdf.setFont("Helvetica", 12)
+            y_position = height - 100
+
+            for review in reviews:
+                pdf.setFont("Helvetica", 10)
+                pdf.drawString(100, y_position, f"Customer Name: {review[0]}")
+                pdf.drawString(300, y_position, f"Review: {review[1]}")
+                pdf.drawString(500, y_position, f"Rating: {review[2]}")
+                y_position -= 20
+
+                if y_position < 50:
+                    pdf_canvas.showPage()
+                    y_position = height - 50
+
+            pdf.save()
+            messagebox.showinfo("Success", f"PDF report generated: {pdf_file}")
+        else:
+            messagebox.showinfo("No Data", "No reviews available to generate the report.")
+
+    # Generate bar chart showing the number of reviews per rating
+    def generate_rating_graph():
+        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT rating, COUNT(*) FROM Reviews GROUP BY rating")
+        ratings = cursor.fetchall()
+        conn.close()
+
+        if ratings:
+            rating_values = [r[0] for r in ratings]
+            rating_counts = [r[1] for r in ratings]
+
+            plt.bar(rating_values, rating_counts, color='blue')
+            plt.xlabel('Ratings')
+            plt.ylabel('Number of Reviews')
+            plt.title('Number of Reviews per Rating')
+            plt.xticks(rating_values)
+            plt.grid(axis='y')
+            plt.show()
+        else:
+            messagebox.showinfo("No Data", "No reviews available to generate the graph.")
+
+    def back_to_panel(window):
+        window.destroy()
+        agency_panel()
+
+    window = Tk()
+    window.geometry("1221x773")
+    window.configure(bg="#FFFFFF")
+
+    canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
+    canvas.place(x=0, y=0)
+
+    image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+    image_1 = canvas.create_image(610.0, 386.0, image=image_image_1)
+    canvas.create_text(600, 40, anchor="center", text="MANAGE Rating and Reviews", fill="#000000",
+                       font=("Times New Roman ExtraBold", 18))
+
+    # Create the reviews table in the database (if not exists)
+    create_reviews_table()
+
+    # Frame for viewing reviews
+    view_reviews_frame = ctk.CTkFrame(window, corner_radius=10, width=1000, height=500)
+    view_reviews_frame.place(x=100, y=100)
+
+    # Rating selection dropdown
+    rating_label = ctk.CTkLabel(view_reviews_frame, text="Select Rating to View Reviews:", font=("Arial", 16))
+    rating_label.place(x=400, y=10)
+
+    # Rating selection dropdown
+    rating_var_view = ctk.IntVar(value=1)
+    rating_dropdown = ctk.CTkComboBox(
+        view_reviews_frame,
+        values=[str(i) for i in range(1, 6)],
+        variable=rating_var_view,
+        command=fetch_reviews_by_rating,
+        font=("Arial", 14),
+        width=200,
+    )
+    rating_dropdown.place(x=400, y=50)
+
+    # Treeview to display reviews
+    columns = ("Customer Name", "Review", "Rating")
+
+    tree_frame = ctk.CTkFrame(view_reviews_frame, width=900, height=400)
+    tree_frame.place(x=50, y=100)
+
+    # Vertical scrollbar
+    tree_scroll_y = ttk.Scrollbar(tree_frame, orient="vertical")
+    tree_scroll_y.place(x=882, y=0, height=400)
+
+    # Treeview with scrollbars
+    tree = ttk.Treeview(
+        tree_frame,
+        columns=columns,
+        show='headings',
+        height=15,
+        yscrollcommand=tree_scroll_y.set,
+    )
+    tree.place(x=0, y=0, width=880, height=400)
+
+    # Configure the scrollbars
+    tree_scroll_y.config(command=tree.yview)
+    for col in columns:
+        tree.heading(col, text=col)
+        tree.column(col, anchor="center", width=180)
+
+    # Generate PDF report button
+    generate_pdf_button = ctk.CTkButton(window, text="Generate PDF Report", command=generate_pdf_report, width=150,
+                                        font=("Times New Roman ExtraBold", 18))
+    generate_pdf_button.place(x=200, y=650)
+
+    # Generate rating graph button
+    generate_graph_button = ctk.CTkButton(window, text="Generate Rating Graph", command=generate_rating_graph,
+                                          width=150, font=("Times New Roman ExtraBold", 18))
+    generate_graph_button.place(x=800, y=650)
+    button_back = Button(
+        text="Back to Panel",
+        command=lambda: back_to_panel(window),
+        bg="#F6139F",
+        fg="#000000"
+    )
+    button_back.place(x=550, y=650, width=100, height=30)
+    # Start the Tkinter main loop
+    window.resizable(False, False)
+    window.mainloop()
+
+def manage_promo():
+    global window
+    window.destroy()
+    output_path = Path(__file__).parent
+    assets_path = output_path / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
+
+    def relative_to_assets(path: str) -> Path:
+        return assets_path / Path(path)
+
+    def connect_db():
+        return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+
+    selected_promotion_id = None
+
+    def create_promotions_table():
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Recreate the table with the correct schema
+        cursor.execute(''' 
+            CREATE TABLE IF NOT EXISTS promotions (
+                promotion_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                description TEXT,
+                discount_percentage REAL,
+                start_date TEXT,
+                end_date TEXT,
+                promo_code TEXT,
+                image_path TEXT
+            )
+        ''')
+
+        conn.commit()
+        conn.close()
+
+    create_promotions_table()
+
+    # Fetch all promotions from the database
+    def fetch_promotions():
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT promotion_id, name, description, discount_percentage, start_date, end_date, promo_code, image_path FROM promotions")
+        promotions = cursor.fetchall()
+        conn.close()
+        return promotions
+
+    def add_promotion(name, description, discount, start_date, end_date, promo_code, image_path):
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO promotions (name, description, discount_percentage, start_date, end_date, promo_code, image_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (name, description, discount, start_date, end_date, promo_code, image_path))
+        conn.commit()
+        conn.close()
+        messagebox.showinfo("Success", "Promotion added successfully!")
+        display_promotions()
+
+    # Display all promotions in the Treeview
+    def display_promotions():
+        promotion_tree.delete(*promotion_tree.get_children())  # Clear the Treeview first
+        promotions = fetch_promotions()
+        for promo in promotions:
+            promotion_tree.insert(
+                "", "end", values=(promo[0], promo[1], promo[2], f"{promo[3]}%", promo[4], promo[5], promo[6], promo[7])
+            )
+
+    def add_promotion_page():
+        global promotion_tree, image_preview_label, name_entry, description_entry, discount_entry, start_date_entry, end_date_entry, promo_code_entry, image_path_var
+        image_path_var = None
+        selected_promotion_id = None  # To store the ID of the selected promotion
+
+        def clear_button():
+            name_entry.delete(0, 'end')
+            description_entry.delete(0, 'end')
+            discount_entry.delete(0, 'end')
+            start_date_entry.set_date(date.today())
+            end_date_entry.set_date(date.today())
+            promo_code_entry.delete(0, 'end')
+            image_preview_label.config(image='')
+            global image_path_var
+            image_path_var = ""  # Reset image path variable
+
+        def delete_button():
+            global selected_promotion_id
+            if selected_promotion_id is None:
+                messagebox.showerror("Error", "No promotion selected for deletion.")
+                return
+
+            response = messagebox.askyesno("Delete Confirmation", "Are you sure you want to delete this promotion?")
+            if response:
+                conn = connect_db()
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM promotions WHERE promotion_id = ?", (selected_promotion_id,))
+                conn.commit()
+                conn.close()
+
+                messagebox.showinfo("Success", "Promotion deleted successfully!")
+                clear_button()  # Clear fields after deletion
+                display_promotions()  # Refresh the Treeview
+
+        def go_back():
+            window.destroy()
+            agency_panel()
+
+        window = Tk()
+        window.geometry("1221x773")
+        window.title("Promotions")
+        window.configure(bg="#FFFFFF")
+
+        canvas = Canvas(window, bg="#FFFFFF", height=773, width=1221, bd=0, highlightthickness=0, relief="ridge")
+        canvas.place(x=0, y=0)
+        image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+        canvas.create_image(610.0, 386.0, image=image_image_1)
+
+        canvas.create_text(600, 40, text="Current Promotions", font=("Arial", 14), anchor="center")
+
+        # Treeview to display promotions with scrollbar
+        columns = (
+        "promotion_id", "name", "description", "discount", "start_date", "end_date", "promo_code", "image_path")
+        promotion_tree = Treeview(window, columns=columns, show="headings", height=10)
+
+        promotion_tree.heading("promotion_id", text="Promotion ID")
+        promotion_tree.heading("name", text="Promotion Name")
+        promotion_tree.heading("description", text="Description")
+        promotion_tree.heading("discount", text="Discount Percentage")
+        promotion_tree.heading("start_date", text="Start Date")
+        promotion_tree.heading("end_date", text="End Date")
+        promotion_tree.heading("promo_code", text="Promo Code")
+        promotion_tree.heading("image_path", text="Image Path")
+
+        # Configure column widths
+        promotion_tree.column("promotion_id", width=100)
+        promotion_tree.column("name", width=150)
+        promotion_tree.column("description", width=200)
+        promotion_tree.column("discount", width=120)
+        promotion_tree.column("start_date", width=100)
+        promotion_tree.column("end_date", width=100)
+        promotion_tree.column("promo_code", width=100)
+        promotion_tree.column("image_path", width=200)
+
+        promotion_tree.place(x=65.0, y=70.0, width=1100.0, height=200.0)
+        # Fetch and display promotions initially
+        display_promotions()
+
+        # Fields for adding a new promotion
+        canvas.create_text(600, 300, text="Add New Promotion", font=("Arial", 14), anchor="center")
+
+        canvas.create_text(600, 350, text="Promotion Name", font=("Arial", 12), anchor="center")
+        name_entry = Entry(bd=0, bg="white", fg="#000716", highlightthickness=0)
+        name_entry.place(x=453.0, y=370.0, width=300.0, height=22.0)
+
+        canvas.create_text(600, 410, text="Description", font=("Arial", 12), anchor="center")
+        description_entry = Entry(bd=0, bg="white", fg="#000716", highlightthickness=0)
+        description_entry.place(x=453.0, y=430.0, width=300.0, height=22.0)
+
+        canvas.create_text(600, 470, text="Discount Percentage", font=("Arial", 12), anchor="center")
+        discount_entry = Entry(bd=0, bg="white", fg="#000716", highlightthickness=0)
+        discount_entry.place(x=453.0, y=490.0, width=300.0, height=22.0)
+
+        canvas.create_text(600, 530, text="Start Date", font=("Arial", 12), anchor="center")
+        start_date_entry = DateEntry(window, width=47, background='grey', foreground='white', date_pattern="yyyy-mm-dd")
+        start_date_entry.place(x=453.0, y=550.0, width=300.0, height=22.0)
+
+        canvas.create_text(600, 590, text="End Date", font=("Arial", 12), anchor="center")
+        end_date_entry = DateEntry(window, width=47, background='grey', foreground='white', date_pattern="yyyy-mm-dd")
+        end_date_entry.place(x=453.0, y=610.0, width=300.0, height=22.0)
+
+        canvas.create_text(600, 650, text="Promo Code", font=("Arial", 12), anchor="center")
+        promo_code_entry = Entry(bd=0, bg="white", fg="#000716", highlightthickness=0)
+        promo_code_entry.place(x=453.0, y=670.0, width=300.0, height=22.0)
+
+        def select_image():
+            global image_path_var
+            image_path_var = filedialog.askopenfilename(title="Select Image",
+                                                        filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
+            if image_path_var:
+                display_image_preview(image_path_var)
+
+        image_preview_label = Label(window)
+        image_preview_label.place(x=800, y=400)
+
+        def display_image_preview(image_path):
+            if not image_path or not os.path.isfile(image_path):
+                # Display a default message or clear the label if no image is available
+                image_preview_label.config(image='', text="No Image Selected")
+                return
+
+            try:
+                img = Image.open(image_path)
+                img = img.resize((200, 150), Image.LANCZOS)
+                tk_img = ImageTk.PhotoImage(img)
+                image_preview_label.config(image=tk_img, text='')  # Clear any previous text
+                image_preview_label.image = tk_img
+            except PermissionError:
+                messagebox.showerror("Error", "Permission denied when trying to open the image.")
+
+        def on_add_promotion():
+            name = name_entry.get()
+            description = description_entry.get()
+            discount = discount_entry.get()
+            start_date = start_date_entry.get()
+            end_date = end_date_entry.get()
+            promo_code = promo_code_entry.get()
+            current_date = datetime.today()
+
+            if not name or not description or not discount or not start_date or not end_date or not promo_code:
+                messagebox.showerror("Error", "Please fill in all fields.")  # Show error if any field is empty
+                return
+
+            try:
+                discount = float(discount_entry.get())
+                if discount <= 0 or discount > 100:
+                    raise ValueError("Discount must be between 0 and 100.")
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid discount percentage (0-100).")
+                return
+
+            # Validation for dates
+            if datetime.strptime(start_date, '%Y-%m-%d') < current_date:
+                messagebox.showerror("Error", "Start date cannot be in the past.")
+                return
+
+            if datetime.strptime(start_date, '%Y-%m-%d') > datetime.strptime(end_date, '%Y-%m-%d'):
+                messagebox.showerror("Error", "End date must be after start date.")
+                return
+
+            add_promotion(name, description, discount, start_date, end_date, promo_code, image_path_var)
+            display_promotions()
+
+        def populate_fields(event):
+            global image_path_var, selected_promotion_id
+            selected_item = promotion_tree.selection()
+            if selected_item:
+                item_data = promotion_tree.item(selected_item, "values")
+                selected_promotion_id = item_data[0]
+                print("Selected promotion ID:", selected_promotion_id)  # Debug print to confirm selection
+
+                name_entry.delete(0, 'end')
+                name_entry.insert(0, item_data[1])  # Promotion Name
+
+                description_entry.delete(0, 'end')
+                description_entry.insert(0, item_data[2])  # Description
+
+                discount_entry.delete(0, 'end')
+                discount_entry.insert(0, item_data[3].replace("%", ""))  # Discount Percentage
+
+                start_date_entry.set_date(item_data[4])  # Start Date
+                end_date_entry.set_date(item_data[5])  # End Date
+
+                promo_code_entry.delete(0, 'end')
+                promo_code_entry.insert(0, item_data[6])
+
+                image_path_var = item_data[7]  # Image Path
+                display_image_preview(image_path_var)  # Display Image Preview
+
+            # Function to update promotion details in the database
+
+        def update_promotion():
+            global selected_promotion_id
+            if selected_promotion_id is None:
+                messagebox.showerror("Error", "No promotion selected for update.")
+                return
+
+            name = name_entry.get()
+            description = description_entry.get()
+            start_date = start_date_entry.get()
+            end_date = end_date_entry.get()
+            promo_code = promo_code_entry.get()
+            current_date = datetime.today()
+
+            try:
+                discount = float(discount_entry.get())
+                if discount <= 0 or discount > 100:
+                    raise ValueError("Discount must be between 0 and 100.")
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid discount percentage (0-100).")
+                return
+
+            # Validation for dates
+            if datetime.strptime(start_date, '%Y-%m-%d') < current_date:
+                messagebox.showerror("Error", "Start date cannot be in the past.")
+                return
+
+            if datetime.strptime(start_date, '%Y-%m-%d') > datetime.strptime(end_date, '%Y-%m-%d'):
+                messagebox.showerror("Error", "End date must be after start date.")
+                return
+
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute('''
+                   UPDATE promotions
+                   SET name = ?, description = ?, discount_percentage = ?, start_date = ?, end_date = ?, promo_code = ?, image_path = ?
+                   WHERE promotion_id = ?
+               ''', (
+            name, description, discount, start_date, end_date, promo_code, image_path_var, selected_promotion_id))
+
+            conn.commit()
+            conn.close()
+
+            messagebox.showinfo("Success", "Promotion updated successfully!")
+            display_promotions()
+            selected_promotion_id = None
+
+        promotion_tree.bind("<<TreeviewSelect>>", populate_fields)
+
+        # Update Button
+        Button(window, text="Select Image", command=select_image).place(x=830.0, y=580.0, width=150.0, height=30.0)
+        Button(window, text="Add Promotion", command=on_add_promotion, font=("Arial", 10)).place(x=150.0, y=380.0,
+                                                                                                 width=150.0,
+                                                                                                 height=30.0)
+        Button(window, text="Update Promotion", command=update_promotion, font=("Arial", 10)).place(x=150.0, y=430.0,
+                                                                                                    width=150.0,
+                                                                                                    height=30.0)
+        Button(window, text="Clear", command=clear_button, font=("Arial", 10)).place(x=150.0, y=480.0, width=150.0,
+                                                                                     height=30.0)
+        Button(window, text="Delete Promotion", command=delete_button, font=("Arial", 10)).place(x=150.0, y=530.0,
+                                                                                                 width=150.0,
+                                                                                                 height=30.0)
+        Button(window, text="Back", command=go_back, font=("Arial", 10)).place(x=150.0, y=580.0, width=150.0,
+                                                                               height=30.0)
+
+        window.resizable(False, False)
+        window.mainloop()
+
+    add_promotion_page()
+
+def agency_panel():
+    global window
+    window = Tk()
+
+    window.geometry("1221x773")
+    window.configure(bg="#FFFFFF")
+
+    canvas = Canvas(
+        window,
+        bg="#FFFFFF",
+        height=773,
+        width=1221,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+
+    canvas.place(x=0, y=0)
+    image_image_1 = PhotoImage(
+        file=relative_to_assets("image_1.png"))
+    image_1 = canvas.create_image(
+        610.0,
+        386.0,
+        image=image_image_1
+    )
+
+    canvas.create_text(
+        396.0,
+        112.0,
+        anchor="nw",
+        text="Agency Panel",
+        fill="#000000",
+        font=("Inter Bold", 64 * -1)
+    )
+
+    button_image_1 = PhotoImage(
+        file=relative_to_assets("button_1.png"))
+    button_1 = Button(
+        image=button_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=manage_bookings,
+        relief="flat"
+    )
+    button_1.place(
+        x=652.0,
+        y=263.0,
+        width=469.0,
+        height=144.0
+    )
+
+    button_image_2 = PhotoImage(
+        file=relative_to_assets("button_2.png"))
+    button_2 = Button(
+        image=button_image_2,
+        borderwidth=0,
+        highlightthickness=0,
+        command=manage_promo,
+        relief="flat"
+    )
+    button_2.place(
+        x=652.0,
+        y=503.0,
+        width=469.0,
+        height=144.0
+    )
+
+    button_image_3 = PhotoImage(
+        file=relative_to_assets("button_3.png"))
+    button_3 = Button(
+        image=button_image_3,
+        borderwidth=0,
+        highlightthickness=0,
+        command=manage_cars,
+        relief="flat"
+    )
+    button_3.place(
+        x=101.0,
+        y=263.0,
+        width=469.0,
+        height=144.0
+    )
+
+    button_image_4 = PhotoImage(
+        file=relative_to_assets("button_4.png"))
+    button_4 = Button(
+        image=button_image_4,
+        borderwidth=0,
+        highlightthickness=0,
+        command=manage_rating,
+        relief="flat"
+    )
+    button_4.place(
+        x=101.0,
+        y=505.0,
+        width=469.0,
+        height=144.0
+    )
+    window.resizable(False, False)
+    window.mainloop()
+
+agency_panel()
