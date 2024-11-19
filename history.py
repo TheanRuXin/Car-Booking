@@ -73,50 +73,58 @@ def show_history_details(user_id):
     for row in rows:
         treeview_history.insert("", "end", values=row)
 
+
 def display_selected_image(event):
     selected_item = treeview_history.selection()
     if selected_item:
         item = treeview_history.item(selected_item)
-        car_id = item['values'][0]
+        reg_num = item['values'][0]  # Get car ID from the selected row
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT C.image_path FROM cars_details C JOIN History h ON H.car_id = C.id WHERE H.user_id =? ",(user_id,))
+        cursor.execute(f"SELECT image_path FROM cars_details WHERE registration_number = \'{reg_num}\'")
+
         image_path = cursor.fetchone()
 
+        print(image_path)
         if image_path and image_path[0]:
-            image_file = image_path[0]
-            if os.path.exists(image_file):
-                try:
-                    img = Image.open(image_file)
-                    img = img.resize((300, 300), Image.Resampling.LANCZOS)
-                    img = ImageTk.PhotoImage(img)
+            print(1)
+            try:
+                print(2)
+                img = Image.open(image_path[0])
+                img = img.resize((300, 300), Image.Resampling.LANCZOS)
+                img = ImageTk.PhotoImage(img)
 
-                    # Display the image
-                    label_image.config(image=img)
-                    label_image.image = img
-                except Exception as e:
-                    print(f"Error loading image: {e}")
-                    label_image.config(image='')
-            else:
-                print("Image file does not exist.")
+                # Display the image
+                label_image.config(image=img)
+                label_image.image = img
+            except Exception as e:
+                print(f"Error loading image: {e}")
                 label_image.config(image='')
         else:
-            print("No image path found in database.")
             label_image.config(image='')
 
-        selected_car_info = (car_id, image_path[0])
-        window.selected_car_info = selected_car_info
+def open_rating_window(user_id,car_id):
+    if not car_id:
+        messagebox.showerror("Error", "No car selected!")
+        return
+    window.withdraw()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\build\rating.py",str(user_id),str(car_id)])
+def get_selected_car_id():
+    selected_item = treeview_history.selection()
+    if selected_item:
+        item = treeview_history.item(selected_item)
+        reg_num = item['values'][0]  # Get registration number from the selected row
 
-def open_rating_window(user_id):
-    # Get the selected car info stored earlier
-    if hasattr(window, 'selected_car_info'):
-        car_id, image_path = window.selected_car_info
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM cars_details WHERE registration_number = ?", (reg_num,))
+        result = cursor.fetchone()
+        conn.close()
 
-        # Open the rating page, passing car_id and image_path as arguments
-        subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\build\rating.py", str(car_id), str(user_id),image_path])
-    else:
-        messagebox.showwarning("Selection Error", "Please select a car from the history first.")
+        if result:
+            return result[0]  # Return the car ID
+    return None
 
 def promo_button(user_id):
     window.destroy()
@@ -160,7 +168,6 @@ treeview_history.column("No. of Days", width=90, anchor="center")
 treeview_history.place(x=25, y=280, width=850, height=300)
 
 treeview_history.bind("<<TreeviewSelect>>", display_selected_image)
-
 image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
 image_1 = canvas.create_image(86.0,57.0,image=image_image_1)
 
@@ -181,7 +188,7 @@ canvas.create_text(56.0,168.0,anchor="nw",text="History",fill="#000000",font=("K
 label_image = Label(window)
 label_image.place(x=900, y=280, width=300, height=300)
 
-button_rating = Button(window, text="Rating", command=lambda:open_rating_window(user_id), bg="red", fg="yellow",font=("KaiseiDecol Medium", 16 * -1))
+button_rating = Button(window, text="Rating", command=lambda:open_rating_window(user_id,get_selected_car_id()), bg="red", fg="yellow",font=("KaiseiDecol Medium", 16 * -1))
 button_rating.place(x=25,y=600,width=150,height=50)
 
 if len(sys.argv) < 2:
@@ -189,6 +196,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 user_id = int(sys.argv[1])
+car_id = int(sys.argv[1])
 show_history_details(user_id)
 window.resizable(False, False)
 window.mainloop()
