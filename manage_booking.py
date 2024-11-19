@@ -5,7 +5,7 @@ import sqlite3,os,smtplib
 from PIL import Image, ImageTk
 from pathlib import Path
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame11")
@@ -18,8 +18,14 @@ def connect_db():
     conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
     return conn
 
+def validate_date(date_text):
+    try:
+        return datetime.strptime(date_text, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
 # Function to fetch and display booking details based on date range
-def show_booking_details(start_date=None, end_date=None):
+def show_booking_details(start_date=None, end_date=None, status=None):
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -36,8 +42,18 @@ def show_booking_details(start_date=None, end_date=None):
     params = []
 
     if start_date and end_date:
-        conditions.append('b.rental_start_date >= ? AND b.rental_end_date <= ?')
+        conditions.append('DATE(b.rental_start_date) >= DATE(?) AND DATE(b.rental_end_date) <= DATE(?)')
         params.extend([start_date, end_date])
+    elif start_date:  # Start date only
+        conditions.append('DATE(b.rental_start_date) >= DATE(?)')
+        params.append(start_date)
+    elif end_date:  # End date only
+        conditions.append('DATE(b.rental_end_date) <= DATE(?)')
+        params.append(end_date)
+
+    if status:
+        conditions.append('b.status LIKE ?')
+        params.append(status)
 
     if conditions:
         query += ' WHERE ' + ' AND '.join(conditions)
@@ -66,22 +82,24 @@ def show_booking_details(start_date=None, end_date=None):
         )
         treeview_bookings.insert("", "end", values=formatted_row)
 
-
 def search_bookings():
-    start_date = entry_start_date.get()
-    end_date = entry_end_date.get()
-    status = entry_status.get()
+    start_date_input = entry_start_date.get().strip()
+    end_date_input = entry_end_date.get().strip()
+    status = entry_status.get().strip()
+    start_date = validate_date(start_date_input) if start_date_input else None
+    end_date = validate_date(end_date_input) if end_date_input else None
 
-    if start_date and end_date:
-        show_booking_details(start_date, end_date)
-    else:
-        messagebox.showwarning("Input Error", "Please enter both start date and end date.")
+    if start_date_input and not start_date:
+        messagebox.showerror("Invalid Date",f"Start Date '{start_date_input}' is not in the correct format (YYYY-MM-DD).")
         return
-    if status:
-        show_booking_details(start_date, end_date)
-    else:
-        messagebox.showwarning("Input Error", "Please enter status.")
+    if end_date_input and not end_date:
+        messagebox.showerror("Invalid Date", f"End Date '{end_date_input}' is not in the correct format (YYYY-MM-DD).")
         return
+    if not start_date and not end_date and not status:
+        messagebox.showwarning("Input Error", "Please enter at least one filter (date range or status).")
+        return
+    # Pass all filters to show_booking_details
+    show_booking_details(start_date, end_date, status)
 
 def open_booking_detail_window(booking_id):      #to approve/reject
     conn = connect_db()
@@ -200,13 +218,13 @@ def display_selected_image(event):
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT c.image_path FROM cars c JOIN bookings b ON b.car_id = c.id WHERE b.bookings_id = ?", (booking_id,))
+        cursor.execute("SELECT c.image_path FROM cars c JOIN bookings b ON b.car_id = c.id WHERE b.booking_id = ?", (booking_id,))
         image_path = cursor.fetchone()
 
         if image_path and image_path[0]:
             try:
                 img = Image.open(image_path[0])
-                img = img.resize((200, 150), Image.Resampling.LANCZOS)
+                img = img.resize((300, 300), Image.Resampling.LANCZOS)
                 img = ImageTk.PhotoImage(img)
 
                 # Display the image
