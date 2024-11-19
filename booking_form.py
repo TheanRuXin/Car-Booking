@@ -11,7 +11,7 @@ from datetime import datetime
 from tkcalendar import DateEntry
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\booking_frame")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build\assets\frame0")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -22,7 +22,7 @@ def go_back(user_id):
 
 def create_bookings_table():
     try:
-        conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+        conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
         cursor = conn.cursor()
         cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS bookings (
@@ -38,8 +38,8 @@ def create_bookings_table():
                 promotion TEXT,
                 total_price REAL,
                 status TEXT DEFAULT 'Pending',
-                FOREIGN KEY(car_id) REFERENCES cars_details(id),
-                FOREIGN KEY(user_id) REFERENCES Users_details(id)
+                FOREIGN KEY(car_id) REFERENCES cars(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
             )
         ''')
         conn.commit()
@@ -56,24 +56,42 @@ window.geometry("1221x773")
 window.configure(bg="#FFFFFF")
 
 def connect_db():
-    return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+    return sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
 
 # Ensure bookings table is created
 def get_selected_car_details(car_id):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE id = ?", (car_id,))
+    cursor.execute("SELECT make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars WHERE id = ?", (car_id,))
     car = cursor.fetchone()
     conn.close()
     return car
 
-def fetch_promotions():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT promo_code, discount_percentage FROM promotions")
-    promotions = cursor.fetchall()  # Returns a list of tuples [(code, discount), ...]
-    conn.close()
-    return promotions
+def fetch_discount_for_user():
+    try:
+        # Connect to the database
+        conn = sqlite3.connect('Users.db')  # Assuming your promotions table is in 'Users.db'
+        cursor = conn.cursor()
+
+        # Fetch promotion details
+        cursor.execute("SELECT name, discount_percentage FROM promotions WHERE promotion_id = 1")
+        promotion = cursor.fetchone()
+
+        if promotion:
+            # Extract name and discount
+            promo_name, discount_percentage = promotion
+            return promo_name, discount_percentage / 100  # Convert discount to decimal
+        else:
+            # No promotion found
+            return "No promotions available", 0
+    except Exception as e:
+        # Show an error message and return defaults
+        messagebox.showerror("Database Error", f"Error: {str(e)}")
+        return "Error fetching promotion", 0
+    finally:
+        # Ensure the connection is closed
+        if conn:
+            conn.close()
 
 def create_booking_page(car_id,user_id):
     # Create the Tkinter window once
@@ -137,6 +155,55 @@ def create_booking_page(car_id,user_id):
         57.0,
         image=image_image_1
     )
+
+    button_image_1 = PhotoImage(
+        file=relative_to_assets("button_1.png"))
+    button_1 = Button(
+        image=button_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_1 clicked"),
+        relief="flat"
+    )
+    button_1.place(
+        x=1126.0,
+        y=31.0,
+        width=49.0,
+        height=49.0
+    )
+
+    button_image_4 = PhotoImage(
+             file=relative_to_assets("button_4.png"))
+    button_4 = Button(
+            image=button_image_4,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: print("button_4 clicked"),
+            relief="flat"
+        )
+    button_4.place(
+            x=854.0,
+            y=30.0,
+            width=90.0,
+            height=52.0
+        )
+
+    button_image_5 = PhotoImage(
+            file=relative_to_assets("button_5.png"))
+    button_5 = Button(
+            image=button_image_5,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: print("button_5 clicked"),
+            relief="flat"
+        )
+    button_5.place(
+            x=784.0,
+            y=30.0,
+            width=70.0,
+            height=52.0
+        )
+
     canvas.create_text(
             39.0,
             125.0,
@@ -238,16 +305,8 @@ def create_booking_page(car_id,user_id):
             width=277.0,
             height=28.0
         )
-    promotion_var = StringVar()
-    # Fetch promotions from the database
-    promotions = fetch_promotions()
-    promo_options = ["None"] + [f"{code} ({discount}%)" for code, discount in promotions]
-
-    # Promotion Dropdown
-    Label(window, text="Select Promotion:", font=("KaiseiDecol Medium", 20 * -1), bg="#FFFFFF").place(x=547, y=508)
-    promotion_dropdown = ttk.Combobox(window, textvariable=promotion_var, values=promo_options, state="readonly")
-    promotion_dropdown.current(0)  # Default to "None"
-    promotion_dropdown.place(x=880, y=510, width=277, height=28)
+    promo_name, discount = fetch_discount_for_user()
+    Label(window,text=f"Promotion: {promo_name}, Discount: {discount * 100}%", bg="#FFFFFF", font=("KaiseiDecol Medium", 20 * -1)).place(x=547, y=508)
 
     button_image_6 = PhotoImage(
         file=relative_to_assets("button_6.png"))
@@ -308,30 +367,25 @@ def create_booking_page(car_id,user_id):
                 return None
 
             # Connect to the database to get the daily rate for the selected car
-            conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+            conn = sqlite3.connect('Users.db')
             cursor = conn.cursor()
 
             # Fetch daily rental price based on car ID or type (use appropriate query as needed)
-            cursor.execute("SELECT daily_rate FROM cars_details WHERE id = ?", (car_id,))
+            cursor.execute("SELECT daily_rate FROM cars WHERE id = ?", (car_id,))
             daily_rate = cursor.fetchone()[0]
-            total_price = days * daily_rate
+            conn.close()
 
-            selected_promo = promotion_var.get()
-            discount = 0
-            if selected_promo != "None":
-                for code, discount_pct in promotions:
-                    if f"{code} ({discount_pct}%)" == selected_promo:
-                        discount = discount_pct / 100
-                        break
+            total_price = days * daily_rate
+            promo_name, discount = fetch_discount_for_user()
             total_price *= (1 - discount)
 
             label_breakdown.config(
-                text=f"Rental Days: {days} days\nDaily Rate: RM {daily_rate}\nDiscount: {int(discount * 100)}%\nTotal Price: RM {total_price:.2f}")
-            conn.close()
+                text=f"Rental Days: {days} days\n\nDaily Rate: RM {daily_rate}\n\nDiscount: {int(discount * 100)}%\n\nTotal Price: RM {total_price:.2f}")
             return total_price  # Return total price and discount percentage
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
+            return None
 
     calculate_button = Button(
         window,
@@ -396,10 +450,9 @@ def create_booking_page(car_id,user_id):
         date_of_birth = birthdate_entry.get().strip()
         rental_start_date = ren_start_entry.get().strip()
         rental_end_date = ren_end_entry.get().strip()
-        selected_promotion = promotion_var.get() or ""
 
     # Check if any of the fields are empty
-        if not customer_name or not email or not contact_number or not date_of_birth or not rental_start_date or not rental_end_date or not selected_promotion:
+        if not customer_name or not email or not contact_number or not date_of_birth or not rental_start_date or not rental_end_date:
             messagebox.showerror("Error", "Please fill in all fields.")  # Show error if any field is empty
             return
 
@@ -437,7 +490,7 @@ def create_booking_page(car_id,user_id):
                 date_of_birth,
                 rental_start_date,
                 rental_end_date,
-                selected_promotion,
+                "Auto Applied",
                 total_price,
                 "Pending"
             ))
@@ -450,7 +503,6 @@ def create_booking_page(car_id,user_id):
 
             # Close the booking window after submission
             window.destroy()
-            subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\car.py"])
 
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"An error occurred: {e}")
