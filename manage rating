@@ -27,7 +27,7 @@ def create_reviews_table():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Reviews(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        car_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
         customer_name TEXT NOT NULL,
         review TEXT NOT NULL,
         rating INTEGER NOT NULL
@@ -37,7 +37,7 @@ def create_reviews_table():
     conn.close()
 
 # Fetch reviews from the database based on rating
-def fetch_reviews_by_rating():
+def fetch_reviews_by_rating(selected_rating=None):
     selected_rating = rating_var_view.get()
     for row in tree.get_children():
         tree.delete(row)
@@ -56,7 +56,7 @@ def fetch_reviews_by_rating():
 
 # Generate PDF report for reviews
 def generate_pdf_report():
-    conn = sqlite3.connect('Car_Rental.db')
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute("SELECT customer_name, review, rating FROM Reviews")
     reviews = cursor.fetchall()
@@ -90,7 +90,7 @@ def generate_pdf_report():
 
 # Generate bar chart showing the number of reviews per rating
 def generate_rating_graph():
-    conn = sqlite3.connect('Car_Rental.db')
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute("SELECT rating, COUNT(*) FROM Reviews GROUP BY rating")
     ratings = cursor.fetchall()
@@ -110,7 +110,10 @@ def generate_rating_graph():
     else:
         messagebox.showinfo("No Data", "No reviews available to generate the graph.")
 
-# Set up the main window
+def back_to_panel(window):
+    window.destroy()
+    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\agency\agency_panel\build\agency_panel.py"])
+
 window = Tk()
 window.geometry("1221x773")
 window.configure(bg = "#FFFFFF")
@@ -178,7 +181,13 @@ generate_pdf_button.place(x=200, y=650)
 # Generate rating graph button
 generate_graph_button = ctk.CTkButton(window, text="Generate Rating Graph", command=generate_rating_graph, width=150,font=("Times New Roman ExtraBold", 18))
 generate_graph_button.place(x=800, y=650)
-
+button_back = Button(
+    text="Back to Panel",
+    command=lambda:back_to_panel(window),
+    bg="#F6139F",
+    fg="#000000"
+)
+button_back.place(x=550, y=650, width=100, height=30)
 # Start the Tkinter main loop
 window.resizable(False, False)
 window.mainloop()
