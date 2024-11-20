@@ -14,20 +14,12 @@ def relative_to_assets(path: str) -> Path:
 def connect_db():
     return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
 
-def promo_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
-
 def go_back(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
-def cars_button(user_id):
-    window.withdraw()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
-
 def profile_page(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def submit_review(car_id):
@@ -109,16 +101,6 @@ if __name__ == "__main__":
     button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=lambda: promo_button(user_id),
                       relief="flat")
     button_1.place(x=1126.0, y=31.0, width=49.0, height=49.0)
-
-    button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
-    button_2 = Button(image=button_image_2, borderwidth=0, highlightthickness=0, command=lambda: promo_button(user_id),
-                      relief="flat")
-    button_2.place(x=1010.0, y=24.0, width=90.0, height=52.0)
-
-    button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
-    button_3 = Button(image=button_image_3, borderwidth=0, highlightthickness=0, command=lambda: cars_button(user_id),
-                      relief="flat")
-    button_3.place(x=917.0, y=24.0, width=70.0, height=52.0)
 
     button_submit = Button(window, text="Submit", command=lambda: submit_review(car_id), bg="yellow", fg="black",
                            font=("KaiseiDecol Medium", 16 * -1))
