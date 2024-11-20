@@ -156,6 +156,11 @@ def open_booking_detail_window(booking_id):      #to approve/reject
                bg="green", fg="black", font=("Arial",11)).grid(row=9, column=0, pady=10, sticky="ew")
         Button(frame, text="Reject", command=lambda: update_booking_status(booking[0], "Rejected", detail_window),
                bg="red", fg="black", font=("Arial",11)).grid(row=9, column=2, pady=10, sticky="ew")
+        Button(frame, text="Payment Successful", command=lambda: update_booking_status(booking[0], "Payment Successful", detail_window),
+               bg="yellow", fg="black", font=("Arial", 11)).grid(row=9, column=2, pady=10, sticky="ew")
+        Button(frame, text="Return",command=lambda: update_booking_status(booking[0], "Car already return", detail_window),
+               bg="blue", fg="black", font=("Arial", 11)).grid(row=9, column=3, pady=10, sticky="ew")
+
 
 
 def update_booking_status(booking_id, status, detail_window):
