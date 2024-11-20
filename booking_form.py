@@ -494,6 +494,22 @@ def create_booking_page(car_id,user_id):
                 total_price,
                 "Pending"
             ))
+            cursor.execute("""
+                            INSERT INTO history (car_id, user_id, customer_name, email, contact_number, date_of_birth, rental_start_date, rental_end_date, promotion, total_price, status)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                car_id,
+                user_id,
+                customer_name,
+                email,
+                contact_number,
+                date_of_birth,
+                rental_start_date,
+                rental_end_date,
+                "Auto Applied",
+                total_price,
+                "Pending"
+            ))
 
             conn.commit()
             conn.close()
