@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 from tkinter.ttk import Treeview
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,Label, Entry, filedialog, messagebox,ttk,StringVar,OptionMenu,ttk, Toplevel
-import subprocess,sqlite3, os ,smtplib
+import subprocess,sqlite3, os ,smtplib,sys
 import textwrap
 from email.mime.text import MIMEText
 
@@ -382,7 +382,7 @@ def manage_bookings():
     assets_path = output_path / Path(r"C:\Users\User\Documents\Ruxin file\build\agency\build\assets\frame2")
 
     def relative_to_assets(path: str) -> Path:
-        return assets_path / Path(path)
+        return ASSETS_PATH / Path(path)
 
     # Connect to the database
     def connect_db():
@@ -529,13 +529,18 @@ def manage_bookings():
                    bg="green", fg="black", font=("Arial", 11)).grid(row=9, column=0, pady=10, sticky="ew")
             Button(frame, text="Reject", command=lambda: update_booking_status(booking[0], "Rejected", detail_window),
                    bg="red", fg="black", font=("Arial", 11)).grid(row=9, column=1, pady=10, sticky="ew")
+            Button(frame, text="Payment Successful",
+                   command=lambda: update_booking_status(booking[0], "Payment Successful", detail_window),
+                   bg="yellow", fg="black", font=("Arial", 11)).grid(row=9, column=2, pady=10, sticky="ew")
+            Button(frame, text="Return",
+                   command=lambda: update_booking_status(booking[0], "Car already return", detail_window),
+                   bg="blue", fg="black", font=("Arial", 11)).grid(row=9, column=3, pady=10, sticky="ew")
 
     def update_booking_status(booking_id, status, detail_window):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute('UPDATE bookings SET status = ? WHERE booking_id = ?', (status, booking_id))
         conn.commit()
-        conn.close()
 
         cursor.execute("SELECT email FROM bookings WHERE booking_id = ?", (booking_id,))
         to_email = cursor.fetchone()[0]
@@ -550,7 +555,7 @@ def manage_bookings():
     def send_email(to_email, booking_id, status):
         try:
             from_email = "ruxinthean@gmail.com"
-            from_password = "diqe nxpk qsmd wsap"
+            from_password = "jgdw njor olsr hrau"
 
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
@@ -1179,24 +1184,21 @@ def manage_promo():
 
         # Update Button
         Button(window, text="Select Image", command=select_image).place(x=830.0, y=580.0, width=150.0, height=30.0)
-        Button(window, text="Add Promotion", command=on_add_promotion, font=("Arial", 10)).place(x=150.0, y=380.0,
-                                                                                                 width=150.0,
-                                                                                                 height=30.0)
-        Button(window, text="Update Promotion", command=update_promotion, font=("Arial", 10)).place(x=150.0, y=430.0,
-                                                                                                    width=150.0,
-                                                                                                    height=30.0)
-        Button(window, text="Clear", command=clear_button, font=("Arial", 10)).place(x=150.0, y=480.0, width=150.0,
-                                                                                     height=30.0)
-        Button(window, text="Delete Promotion", command=delete_button, font=("Arial", 10)).place(x=150.0, y=530.0,
-                                                                                                 width=150.0,
-                                                                                                 height=30.0)
-        Button(window, text="Back", command=go_back, font=("Arial", 10)).place(x=150.0, y=580.0, width=150.0,
-                                                                               height=30.0)
+        Button(window, text="Add Promotion", command=on_add_promotion, font=("Arial", 10)).place(x=150.0, y=380.0,width=150.0,height=30.0)
+        Button(window, text="Update Promotion", command=update_promotion, font=("Arial", 10)).place(x=150.0, y=430.0,width=150.0,height=30.0)
+        Button(window, text="Clear", command=clear_button, font=("Arial", 10)).place(x=150.0, y=480.0, width=150.0,height=30.0)
+        Button(window, text="Delete Promotion", command=delete_button, font=("Arial", 10)).place(x=150.0, y=530.0,width=150.0,height=30.0)
+        Button(window, text="Back", command=go_back, font=("Arial", 10)).place(x=150.0, y=580.0, width=150.0, height=30.0)
 
         window.resizable(False, False)
         window.mainloop()
 
     add_promotion_page()
+
+def logout():
+    global window
+    window.destroy()
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\agency\build\agency_first_page.py"])
 
 def agency_panel():
     global window
@@ -1226,7 +1228,7 @@ def agency_panel():
 
     canvas.create_text(
         396.0,
-        112.0,
+        102.0,
         anchor="nw",
         text="Agency Panel",
         fill="#000000",
@@ -1244,7 +1246,7 @@ def agency_panel():
     )
     button_1.place(
         x=652.0,
-        y=263.0,
+        y=253.0,
         width=469.0,
         height=144.0
     )
@@ -1260,7 +1262,7 @@ def agency_panel():
     )
     button_2.place(
         x=652.0,
-        y=503.0,
+        y=493.0,
         width=469.0,
         height=144.0
     )
@@ -1276,7 +1278,7 @@ def agency_panel():
     )
     button_3.place(
         x=101.0,
-        y=263.0,
+        y=253.0,
         width=469.0,
         height=144.0
     )
@@ -1292,10 +1294,18 @@ def agency_panel():
     )
     button_4.place(
         x=101.0,
-        y=505.0,
+        y=493.0,
         width=469.0,
         height=144.0
     )
+    button_back = Button(
+        text="Log Out",
+        command=lambda: logout(),
+        bg="black",
+        fg="white",
+        font=("Arial", 15)
+    )
+    button_back.place(x=560, y=690, width=100, height=50)
     window.resizable(False, False)
     window.mainloop()
 
