@@ -127,15 +127,20 @@ def get_selected_car_id():
     return None
 
 def promo_button(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
 def cars_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
+    window.withdraw()
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
+
+def back(user_id):
+    window.withdraw()
+    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
+
 
 def profile_button(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen(["python", "Profile.py",str(user_id)])
 
 window = Tk()
@@ -190,6 +195,9 @@ label_image.place(x=900, y=280, width=300, height=300)
 
 button_rating = Button(window, text="Rating", command=lambda:open_rating_window(user_id,get_selected_car_id()), bg="red", fg="yellow",font=("KaiseiDecol Medium", 16 * -1))
 button_rating.place(x=25,y=600,width=150,height=50)
+
+button_rating = Button(window, text="Back", command=lambda:back(user_id), bg="yellow", fg="red",font=("KaiseiDecol Medium", 16 * -1))
+button_rating.place(x=250,y=600,width=150,height=50)
 
 if len(sys.argv) < 2:
     messagebox.showerror("Error", "User ID not provided.")
