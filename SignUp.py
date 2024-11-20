@@ -71,6 +71,10 @@ def sign_up_user(window):
     subprocess.Popen([sys.executable,r"C:\car rental booking system\Car-Booking\LogIn.py"])
 
     conn.close()
+    
+def back(window):
+    window.withdraw()
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
 
 #Registration Page
 def show_sign_up_page():
@@ -86,9 +90,8 @@ def show_sign_up_page():
     image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
     image_1 = canvas.create_image(514.0, 339.0,image=image_image_1)
 
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1,borderwidth=0,highlightthickness=0,command=lambda: sign_up_user(window) ,relief="flat")
-    button_1.place(x=441.0,y=624.0,width=147.0,height=45.0)
+    Button(window, text="Back", command=lambda:back(window), font=("Arial", 20),bg="black",fg="white").place(x=600.0, y=624.0, width=150.0,height=40.0)
+    Button(window, text="Sign Up", command=lambda:sign_up_user(window), font=("Arial", 20),bg="yellow",fg="black").place(x=270.0, y=624.0, width=150.0, height=40.0)
 
     canvas.create_text(157.0,75.0,anchor="nw",text="Username:",fill="#000000",font=("Inter Bold", 40 * -1))
 
