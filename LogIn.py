@@ -19,6 +19,10 @@ import sqlite3
 from tkinter import Tk, Canvas, Entry, Text, Button, messagebox, PhotoImage
 import subprocess, sys
 
+def back(window):
+    window.withdraw()
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
+
 # Fuction to Log In a user
 def user_login():
     conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
@@ -75,8 +79,8 @@ def show_log_in_page():
     canvas.create_text(365.0, 77.0, anchor="nw", text="Log in", fill="#000000", font=("Inter Bold", 60 * -1))
 
     button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=user_login,
-                      relief="flat")
+    button_1.place(x=270.0, y=534.0, width=146.025390625, height=54.92308807373047)
+    Button(window, text="Back", command=lambda: back(window), font=("Arial", 20), bg="black", fg="white").place(x=600.0,y=534.0,width=141.0,height=50.0)
 
     button_1.place(x=445.0, y=534.0, width=146.025390625, height=54.92308807373047)
 
