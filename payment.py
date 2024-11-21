@@ -12,7 +12,7 @@ from email import encoders
 
 #Function to create the payment table in SQLite database
 def create_payment_table():
-    conn = sqlite3.connect("Users.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS payments (
                         payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +23,7 @@ def create_payment_table():
                         card_number TEXT NOT NULL,
                         expiry_date TEXT NOT NULL, 
                         cvv TEXT NOT NULL,
-                        payment_amount FLOAT NOT NULL,
+                        payment_amount REAL NOT NULL,
                         FOREIGN KEY(user_id) REFERENCES Users_details(id),
                         FOREIGN KEY(booking_id) REFERENCES bookings(id)
                     )''')
@@ -32,7 +32,7 @@ def create_payment_table():
     conn.close()
 
 def get_user_email_from_bookings(booking_id):
-    conn = sqlite3.connect("Users.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
     cursor = conn.cursor()
     cursor.execute("SELECT email FROM bookings WHERE booking_id = ?", (booking_id,))
     result = cursor.fetchone()
@@ -41,7 +41,7 @@ def get_user_email_from_bookings(booking_id):
 
 #Function to insert payment details into the database
 def insert_payment_details(user_id, booking_id, user_email, cardholder_name, card_number, expiry_date, cvv,payment_amount):
-    conn = sqlite3.connect("Users.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO payments (user_id, booking_id, customer_email, cardholder_name, card_number, expiry_date, cvv, payment_amount)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (user_id, booking_id, user_email, cardholder_name, card_number, expiry_date, cvv,payment_amount))
@@ -129,15 +129,15 @@ def on_payment (user_email, cardholder_name, card_number, expiry_date, cvv, paym
         messagebox.showerror("Payment Error",f"An unexpected error occurred: {str(e)}")
 
 def get_payment_amount(booking_id):
-    conn = sqlite3.connect("Users.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT total_price FROM bookings WHERE booking_id = ?", (booking_id,))
+    cursor.execute("SELECT ROUND(total_price, 2) FROM bookings WHERE booking_id = ?", (booking_id,))
     result = cursor.fetchone()
     conn.close()
     return result[0] if result else None
 
 def mark_booking_as_paid(booking_id):
-    conn = sqlite3.connect("Users.db")
+    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
     cursor = conn.cursor()
     cursor.execute("UPDATE bookings SET status = 'Paid' WHERE booking_id = ?", (booking_id,))
     conn.commit()
