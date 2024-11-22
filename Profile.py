@@ -52,28 +52,24 @@ def show_user_details(user_id):
         print("User not found.")
 
 def view_booking_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\view_booking.py",str(user_id)])
-
-def notifications_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\notification.py",user_id])
+    window.withdraw()
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\view_booking.py",str(user_id)])
 
 def history_button(user_id):
     window.withdraw()
-    subprocess.Popen(["python",'history.py',str(user_id)])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\history.py",str(user_id)])
 
 def log_out_button():
     window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\first_page.py"])
 
 def promo_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
+    window.withdraw()
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
 def cars_button(user_id):
-    window.destroy()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
+    window.withdraw()
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
 
 window = Tk()
 
@@ -144,23 +140,7 @@ button_3 = Button(
 )
 button_3.place(
     x=124.0,
-    y=250.0,
-    width=972.2060546875,
-    height=71.55624389648438
-)
-
-button_image_4 = PhotoImage(
-    file=relative_to_assets("button_4.png"))
-button_4 = Button(
-    image=button_image_4,
-    borderwidth=0,
-    highlightthickness=0,
-    command=lambda: notifications_button(user_id),
-    relief="flat"
-)
-button_4.place(
-    x=124.0,
-    y=405.0,
+    y=300.0,
     width=972.2060546875,
     height=71.55624389648438
 )
@@ -176,7 +156,7 @@ button_5 = Button(
 )
 button_5.place(
     x=124.0,
-    y=554.07568359375,
+    y=500,
     width=972.2060546875,
     height=71.55624389648438
 )
