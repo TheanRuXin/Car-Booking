@@ -18,11 +18,11 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def agency_sign_up_page():
-    window.destroy()
+    window.withdraw()
     subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\agency\build\agency_sign_up_page.py"])
 
 def agency_login_page():
-    window.destroy()
+    window.withdraw()
     subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\agency\build\agency_login_page.py"])
 
 window = Tk()
