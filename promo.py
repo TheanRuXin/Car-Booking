@@ -7,20 +7,28 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,messagebox
 from tkinter import Tk, Label, PhotoImage
 from PIL import Image, ImageTk
-import sqlite3, os
+import sqlite3, os,sys,subprocess
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame2")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame2")
 
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def connect_db():
-    return sqlite3.connect(r"C:\car rental booking system\Car-Booking\Users.db")
+    return sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
+
+def cars_button(user_id):
+    window.withdraw()
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\car.py",str(user_id)])
+
+def profile_button(user_id):
+    window.withdraw()
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def get_latest_promotion():
     conn = connect_db()
@@ -50,6 +58,7 @@ def display_promo():
         promotion_name, promotion_description, promotion_discount, promotion_start_date, promotion_end_date, promotion_promo_code, promotion_image_path = promotion
 
 
+    global window
     window = Tk()
     window.geometry("1221x773")
     window.configure(bg = "#FFFFFF")
@@ -132,7 +141,7 @@ def display_promo():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: profile_button(user_id),
         relief="flat"
     )
     button_1.place(
@@ -140,22 +149,6 @@ def display_promo():
         y=31.0,
         width=49.0,
         height=49.0
-    )
-
-    button_image_2 = PhotoImage(
-        file=relative_to_assets("button_2.png"))
-    button_2 = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
-        relief="flat"
-    )
-    button_2.place(
-        x=969.0,
-        y=36.0,
-        width=132.0,
-        height=40.0
     )
 
     button_image_4 = PhotoImage(
@@ -168,7 +161,7 @@ def display_promo():
         relief="flat"
     )
     button_4.place(
-        x=854.0,
+        x=1010.0,
         y=30.0,
         width=90.0,
         height=52.0
@@ -180,11 +173,11 @@ def display_promo():
         image=button_image_5,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_5 clicked"),
+        command=lambda: cars_button(user_id),
         relief="flat"
     )
     button_5.place(
-        x=784.0,
+        x=917.0,
         y=30.0,
         width=70.0,
         height=52.0
@@ -197,6 +190,11 @@ def display_promo():
         642.0,
         image=image_image_3
     )
+    if len(sys.argv) < 2:
+        messagebox.showerror("Error", "User ID not provided.")
+        sys.exit(1)
+
+    user_id = int(sys.argv[1])
     window.resizable(False, False)
     window.mainloop()
 display_promo()
