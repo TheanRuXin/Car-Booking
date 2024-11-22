@@ -13,7 +13,7 @@ import subprocess, sys
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\car rental booking system\build4\assets\frame0")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\User\Documents\Ruxin file\build\assets\frame0")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -22,11 +22,11 @@ def relative_to_assets(path: str) -> Path:
 
 def sign_up_button(window):
     window.withdraw()
-    subprocess.Popen([sys.executable, r"C:\car rental booking system\Car-Booking\SignUp.py"])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\sign_up.py"])
 
 def log_in_button(window):
     window.withdraw()
-    subprocess.Popen([sys.executable, r"C:\car rental booking system\Car-Booking\LogIn.py"])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\log_in.py"])
 
 def show_first_page():
     window = Tk()
