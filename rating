@@ -16,11 +16,11 @@ def connect_db():
 
 def go_back(user_id):
     window.withdraw()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def profile_page(user_id):
     window.withdraw()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def submit_review(car_id):
     customer_name = customer_name_entry.get().strip()
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     image_1 = canvas.create_image(610.0, 443.0, image=image_image_1)
 
     button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=lambda: promo_button(user_id),
+    button_1 = Button(image=button_image_1, borderwidth=0, highlightthickness=0, command=lambda: profile_page(user_id),
                       relief="flat")
     button_1.place(x=1126.0, y=31.0, width=49.0, height=49.0)
 
