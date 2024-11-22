@@ -19,11 +19,11 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def promo_button(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
 def profile_button(user_id):
-    window.destroy()
+    window.withdraw()
     subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 def connect_db():
@@ -40,7 +40,7 @@ def search_cars(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = "SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1 AND id NOT IN (SELECT car_id FROM bookings) "
+    query = """SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1 AND id NOT IN (SELECT car_id FROM bookings)"""
     parameters = []
 
     car_model = car_model_entry.get().lower()
@@ -105,7 +105,7 @@ def display_car_details(car_data, user_id):
 
         # Display car details
         canvas.create_text((x1 + 20, y1 + 80), text=f"{car['brand']}", font=("Helvetica", 13, "bold"), anchor="nw", tags="car_detail")
-        canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
+        canvas.create_text((x1 + 20, y1 + 100), text=f"Price: RM{car['price']:.2f}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 120), text=f"Seats: {car['seats']}, Car Type: {car['car_type']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
         canvas.create_text((x1 + 20, y1 + 140), text=f"Transmission: {car['transmission']}", font=("Helvetica", 11), anchor="nw", tags="car_detail")
 
@@ -123,7 +123,8 @@ def load_all_cars(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type,image_path FROM cars_details WHERE id NOT IN (SELECT car_id FROM bookings)")
+    query = """SELECT c.id, c.make_and_model, ROUND(c.daily_rate,2), c.seating_capacity, c.car_type, c.transmission_type,c.image_path FROM cars_details c LEFT JOIN bookings b ON c.id = b.car_id WHERE b.status IN ('Rejected','Return') OR b.car_id IS NULL"""
+    cursor.execute(query)
     car_data = cursor.fetchall()
     conn.close()
 
