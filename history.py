@@ -36,7 +36,6 @@ def create_history_table():
                 rental_end_date TEXT,
                 promotion TEXT,
                 total_price REAL,
-                status TEXT DEFAULT 'Pending',
                 FOREIGN KEY(car_id) REFERENCES cars_details(id),
                 FOREIGN KEY(user_id) REFERENCES Users_details(id)
             )
@@ -58,7 +57,7 @@ def show_history_details(user_id):
     cursor = conn.cursor()
     cursor.execute(''' 
         SELECT c.registration_number, c.make_and_model,
-               h.rental_start_date, h.rental_end_date, h.total_price,
+               h.rental_start_date, h.rental_end_date, ROUND(h.total_price,2),
                COALESCE(julianday(h.rental_end_date) - julianday(h.rental_start_date), 0) AS days
         FROM History h
         JOIN cars_details c ON h.car_id = c.id
@@ -71,7 +70,9 @@ def show_history_details(user_id):
         treeview_history.delete(item)
 
     for row in rows:
-        treeview_history.insert("", "end", values=row)
+        formatted_row = list(row)
+        formatted_row[4] = f"{formatted_row[4]:.2f}"  # Assuming daily_rate is at index 4
+        treeview_history.insert("", "end", values=tuple(formatted_row))
 
 
 def display_selected_image(event):
@@ -128,7 +129,7 @@ def get_selected_car_id():
 
 def promo_button(user_id):
     window.withdraw()
-    subprocess.Popen(["python",r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
+    subprocess.Popen([sys.executable,r"C:\Users\User\Documents\Ruxin file\build\promo.py",str(user_id)])
 
 def cars_button(user_id):
     window.withdraw()
@@ -136,12 +137,12 @@ def cars_button(user_id):
 
 def back(user_id):
     window.withdraw()
-    subprocess.Popen(["python", r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 
 def profile_button(user_id):
     window.withdraw()
-    subprocess.Popen(["python", "Profile.py",str(user_id)])
+    subprocess.Popen([sys.executable, r"C:\Users\User\Documents\Ruxin file\build\profile.py",str(user_id)])
 
 window = Tk()
 window.geometry("1221x773")
