@@ -1,4 +1,3 @@
-
 import customtkinter as ctk
 import sqlite3, sys, smtplib, os
 from tkinter import messagebox
@@ -12,7 +11,7 @@ from email import encoders
 
 #Function to create the payment table in SQLite database
 def create_payment_table():
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS payments (
                         payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +31,7 @@ def create_payment_table():
     conn.close()
 
 def get_user_email_from_bookings(booking_id):
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute("SELECT email FROM bookings WHERE booking_id = ?", (booking_id,))
     result = cursor.fetchone()
@@ -41,7 +40,7 @@ def get_user_email_from_bookings(booking_id):
 
 #Function to insert payment details into the database
 def insert_payment_details(user_id, booking_id, user_email, cardholder_name, card_number, expiry_date, cvv,payment_amount):
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO payments (user_id, booking_id, customer_email, cardholder_name, card_number, expiry_date, cvv, payment_amount)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (user_id, booking_id, user_email, cardholder_name, card_number, expiry_date, cvv,payment_amount))
@@ -129,7 +128,7 @@ def on_payment (user_email, cardholder_name, card_number, expiry_date, cvv, paym
         messagebox.showerror("Payment Error",f"An unexpected error occurred: {str(e)}")
 
 def get_payment_amount(booking_id):
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute("SELECT ROUND(total_price, 2) FROM bookings WHERE booking_id = ?", (booking_id,))
     result = cursor.fetchone()
@@ -137,7 +136,7 @@ def get_payment_amount(booking_id):
     return result[0] if result else None
 
 def mark_booking_as_paid(booking_id):
-    conn = sqlite3.connect(r"C:\car rental booking system\Car-Booking\CarRental.db")
+    conn = sqlite3.connect(r"C:\Users\User\Documents\Ruxin file\build\Car_Rental.db")
     cursor = conn.cursor()
     cursor.execute("UPDATE bookings SET status = 'Paid' WHERE booking_id = ?", (booking_id,))
     conn.commit()
@@ -146,8 +145,8 @@ def mark_booking_as_paid(booking_id):
 def send_receipt_via_email(user_email, receipt_filename):
     try:
         # Email sender and receiver
-        sender_email = "jojolim0434@gmail.com"  # Replace with your email
-        sender_password = "diqe nxpk qsmd wsap"        # Replace with your email password or app password
+        sender_email = "ruxinthean@gmail.com"  # Replace with your email
+        sender_password = "jgdw njor olsr hrau"        # Replace with your email password or app password
         receiver_email = user_email
 
         # Email subject and body
@@ -274,4 +273,3 @@ if __name__ == "__main__":
 
     create_payment_table()  # Create the payment table in the database if it doesn't exist
     payment_window()  # Open the payment window
-
