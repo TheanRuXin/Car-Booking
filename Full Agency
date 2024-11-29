@@ -764,7 +764,7 @@ def manage_rating():
         cursor.execute("SELECT customer_name, review, rating FROM Reviews")
         reviews = cursor.fetchall()
         conn.close()
-        print("Canvas type:", type(canvas))
+
 
         if reviews:
             pdf_file = "reviews_report.pdf"
