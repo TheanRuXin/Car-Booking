@@ -25,8 +25,11 @@ Steps:
 2.Navigate to the project directory: 'Car-Booking'
 3.Install Required Python Libraries: Install all dependencies listed in the `requirements.txt` file
 4.Set Up the SQLite Database: The system uses SQLite as the database. Ensure the database file (e.g., `Car_Rental.db`) exists in the project directory.
-5.Run the Application: Start the program: 'first_page.py'
+5.Run the Application: 
+  1. Start the program for customer: 'first_page.py'
+  2. Start the program for agency: 'agency_first_page.py'
 6.Use the GUI window to interact with the car rental booking system.
+
 ### Notes
 - Email Features: Ensure you configure the email settings in your script (`smtplib` section) for features like email notifications.
 - PDF Reports: The system generates reports using `reportlab`. Reports will be saved in the project directory.
