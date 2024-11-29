@@ -21,13 +21,19 @@ The Car Rental Booking System simplifies the process of booking vehicles for ren
 
 ## Installation
 Steps:
+
 1.Clone the Repository: 'https://github.com/TheanRuXin/Car-Booking/new/master'
+
 2.Navigate to the project directory: 'Car-Booking'
+
 3.Install Required Python Libraries: Install all dependencies listed in the `requirements.txt` file
+
 4.Set Up the SQLite Database: The system uses SQLite as the database. Ensure the database file (e.g., `Car_Rental.db`) exists in the project directory.
+
 5.Run the Application: 
   1. Start the program for customer: 'first_page.py'
   2. Start the program for agency: 'agency_first_page.py'
+
 6.Use the GUI window to interact with the car rental booking system.
 
 ### Notes
