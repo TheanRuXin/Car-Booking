@@ -1,0 +1,15 @@
+Requirement:
+1. pip
+2. tkinter
+3. Pillow
+4. sqlite3
+5. customtkinter
+6. smtplib
+7. reportlab
+8. tkcalendar
+9. os
+10. sys
+11. subprocess
+12. pathlib
+13. textwrap
+14. matplotlib
