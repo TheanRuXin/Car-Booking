@@ -45,7 +45,7 @@ Steps:
 1. Sign Up and Log In.
 2. Search the available cars and select your desired vehicle.
 3. Book a car by specifying the rental dates.
-4. View your booking history in the profile section.
+4. View your booking and history in the profile section.
 
 ### For Agency:
 1. Sign Up and Log In 
