@@ -120,11 +120,11 @@ if __name__ == "__main__":
                        font=("KaiseiDecol Medium", 20 * -1))
     canvas.create_text(700.0, 400.0, anchor="nw", text="Reviews:", fill="#000000", font=("KaiseiDecol Medium", 20 * -1))
 
-    customer_name_entry = Entry(bd=0, bg="#FBFFA6", fg="#000716", highlightthickness=0,
+    customer_name_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0,
                                 font=("KaiseiDecol Medium", 16 * -1))
     customer_name_entry.place(x=56, y=430, height=30, width=300)
 
-    review_entry = Entry(bd=0, bg="#FBFFA6", fg="#000716", highlightthickness=0, font=("KaiseiDecol Medium", 20 * -1))
+    review_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("KaiseiDecol Medium", 20 * -1))
     review_entry.place(x=700, y=430, height=100, width=400)
 
     rating_var = IntVar(value=0)
