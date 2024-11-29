@@ -22,7 +22,7 @@ The Car Rental Booking System simplifies the process of booking vehicles for ren
 ## Installation
 Steps:
 
-1.Clone the Repository: 'https://github.com/TheanRuXin/Car-Booking/new/master'
+1.Clone the Repository: 'https://github.com/TheanRuXin/Car-Booking/tree/master'
 
 2.Navigate to the project directory: 'Car-Booking'
 
