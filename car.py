@@ -40,9 +40,8 @@ def search_cars(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    query = """SELECT id, make_and_model, daily_rate, seating_capacity, car_type, transmission_type, image_path FROM cars_details WHERE 1=1 AND id NOT IN (SELECT car_id FROM bookings)"""
+    query = """SELECT c.id, c.make_and_model, ROUND(c.daily_rate,2), c.seating_capacity, c.car_type, c.transmission_type,c.image_path FROM cars_details c LEFT JOIN bookings b ON c.id = b.car_id WHERE b.status IN ('Rejected','Return') OR b.car_id IS NULL"""
     parameters = []
-
     car_model = car_model_entry.get().lower()
     min_price = min_price_entry.get()
     max_price = max_price_entry.get()
