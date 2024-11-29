@@ -54,7 +54,7 @@ Steps:
 3. Manage car details, customer bookings, ratings and reviews, promotions and history.
 
 ## Technologies Used
-- Backend: Pytho
+- Backend: Python
 - Frontend: Tkinter
 - Database: SQLite 
 
